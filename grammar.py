@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import string
 import dictionaries
+import time
 
 #Headers copied from https://hackersandslackers.com/scraping-urls-with-beautifulsoup/
 #Used to bypass basic anti-webscraping methods by websites
@@ -35,8 +36,13 @@ def isName(word):
 
 #Returns true if word is a valid word or name, false otherwise
 def isWordOrName(word):
-    word = word.lower()
-    return isWord(word) or isName(word)
+    if mayBeName(word) and isName(word):
+        return True
+    return isWord(word)
+
+#returns True if first letter is capitalized and others are not
+def mayBeName(word):
+    return len(word) > 1 and word[0].isupper() and word[1:].islower()
 
 #input misspelled word
 #output set of real words/names that could be confused with word
@@ -44,16 +50,14 @@ def correctWord(word):
     corrections = set()
     for letter in list(word):
         for option in dictionaries.characters[letter]:
-            newWord = word.replace(letter, option)
-            if isWordOrName(newWord):
-                corrections.add(newWord)
             newWord = word.replace(letter, option, 1)
             if isWordOrName(newWord):
                 corrections.add(newWord)
     return corrections
 
-
+t = time.time()
 print(correctWord("ade"))
+print(time.time() - t)
     
     
 
