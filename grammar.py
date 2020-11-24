@@ -19,7 +19,7 @@ headers = {
 #Returns true if word in dictionary.com, false otherwise
 def isWord(word):
     url = "https://www.dictionary.com/browse/" + word + "?s=t"
-    req = requests.get(url, headers)
+    req = requests.get(url, headers) #takes .5 seconds
     soup = BeautifulSoup(req.content, 'html.parser')
     if soup.find_all("meta")[1].get("name") == "robots":
         return False
@@ -31,14 +31,18 @@ def isName(word):
    req = requests.get(url, headers)
    soup = BeautifulSoup(req.content, 'html.parser')
    if soup.find("h1").get_text() == "Whoops! Not Found":
-        return False
-    #return True
+       return False
+    return True
 
 #Returns true if word is a valid word or name, false otherwise
+#adds word to wordsChecked dictionary with value True if real word, false otherwise
+#dictionary meant to increase efficiency by decreasing checks
 def isWordOrName(word):
-    if mayBeName(word) and isName(word):
+    if (mayBeName(word) and isName(word)) or isWord(word):
+        dictionaries.wordsChecked[word] = True
         return True
-    return isWord(word)
+    dictionaries.wordsChecked[word] = False
+    return False
 
 #returns True if first letter is capitalized and others are not
 def mayBeName(word):
@@ -51,12 +55,16 @@ def correctWord(word):
     for letter in list(word):
         for option in dictionaries.characters[letter]:
             newWord = word.replace(letter, option, 1)
-            if isWordOrName(newWord):
+            #if word already checked, use previous result
+            if newWord in dictionaries.wordsChecked:
+                if dictionaries.wordsChecked[newWord]:
+                    corrections.add(newWord)
+            elif isWordOrName(newWord):
                 corrections.add(newWord)
     return corrections
 
 t = time.time()
-print(correctWord("ade"))
+print(correctWord("cabbagd"))
 print(time.time() - t)
     
     
