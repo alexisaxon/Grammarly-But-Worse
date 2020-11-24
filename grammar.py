@@ -3,6 +3,7 @@ module_manager.review()
 import requests
 from bs4 import BeautifulSoup
 import string
+import dictionaries
 
 #Headers copied from https://hackersandslackers.com/scraping-urls-with-beautifulsoup/
 #Used to bypass basic anti-webscraping methods by websites
@@ -23,26 +24,36 @@ def isWord(word):
         return False
     return True
 
-#Returns true if name in babynames.com, false otherwise
+#Returns true if word in babynames.com, false otherwise
 def isName(word):
    url = "https://www.babynames.com/name/" + word 
    req = requests.get(url, headers)
    soup = BeautifulSoup(req.content, 'html.parser')
-   if soup.find("H1").get_text() == "No names found.":
+   if soup.find("h1").get_text() == "Whoops! Not Found":
         return False
-    return True
+    #return True
 
 #Returns true if word is a valid word or name, false otherwise
 def isWordOrName(word):
-    word = word.lowercase()
+    word = word.lower()
     return isWord(word) or isName(word)
 
-
+#input misspelled word
+#output set of real words/names that could be confused with word
 def correctWord(word):
-    
+    corrections = set()
+    for letter in list(word):
+        for option in dictionaries.characters[letter]:
+            newWord = word.replace(letter, option)
+            if isWordOrName(newWord):
+                corrections.add(newWord)
+            newWord = word.replace(letter, option, 1)
+            if isWordOrName(newWord):
+                corrections.add(newWord)
+    return corrections
 
 
-print(isName("Erin"))
+print(correctWord("ade"))
     
     
 
