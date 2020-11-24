@@ -1,0 +1,50 @@
+Project Name: Grammarly But Worse
+
+Project Description: The goal of my project is to develop a program that can suggest
+and implement edits to a written document. When the user uploads a file or types 
+into a textbox, the program will look for errors in capitalization, spelling, and
+some elements of grammar and suggest fixes, which will be implemented at the click
+of a button. Additional features will likely be added after reaching MVP.
+
+Competitive Analysis: In the 112 Term Project Gallery, there is a project from
+Spring 2019 called "LiveThesaurus" that allows the user to highlight a word in 
+their document and replace it with a synonym by tapping it. In typing mode, my
+project will have a similar user interface (text document on the left hand side
+and options for the user on the right hand side) and I will make similar use of
+the BS4 module. I also hope to add a similar synonym-searching feature to my 
+project after I get some of my earlier features working. However, my project will
+be a little further-reaching than this one.
+
+Grammarly also offers similar services as my project (only better, as implied by
+my project title). Like my project, it offers spelling, grammar, and synonym
+features, but it also detects and corrects more complex elements of the text, like
+conciseness, readability, and fluency using artificial intelligence. They also look
+for consistency in spelling of words with multiple spellings (ex behavior and
+behaviour), which I may add to my project if time permits.
+
+Structural Plan: Provided that I end up including both typing mode and file upload
+mode, I will use separate files for the user interface of each one and a third file
+containing the functions used in both modes (ex spelling correction). If I need to
+make use of very long dictionaries or lists (ex containing words that have multiple
+correct spellings), these will be placed in a fourth file so they do not clutter
+up the other files. My first two files will have separate functions for Model, View,
+and Controller, as required by the 112 Graphics module, and several helper functions
+so that no function becomes too long. In the third file, I will aim to have separate
+functions for each feature (ex spelling correction or capitalization) with additional
+helper functions as needed.
+
+Algorithmic Plan: When a word is deemed to be spelling incorrectly (because it is not
+in an online dictionary or online list of names), the program will develop a list of
+possible intended words by replacing each letter with letters that are close to it on 
+a standard keyboard (indicating a typo) or possessing a similar sound by going through
+a dictionary containing these letters. Each generated "word" will then be passed through
+the same online dictionary and baby name list, looking for matches. If a match is found,
+it will be presented to the user as a possible correction.
+
+Timeline Plan:
+
+
+Version Control Plan: I will use Git and a private Github repository to store my code.
+See image at [url]
+
+Modules: I will be using Requests and BS4
