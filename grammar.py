@@ -16,14 +16,30 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'
     }
 
-#Returns true if word in dictionary.com, false otherwise
+#Returns 2-tuple where first value is word status (T/F), 2nd is abbreviation status (T/F)
 def isWord(word):
     url = "https://www.dictionary.com/browse/" + word + "?s=t"
     req = requests.get(url, headers) #takes .5 seconds
     soup = BeautifulSoup(req.content, 'html.parser')
     if soup.find_all("meta")[1].get("name") == "robots":
-        return False
-    return True
+        return (False, False)
+    if isAbbreviation(word, soup):
+        return (True, True)
+    return (True, False)
+
+#True if word is an abbreviation, False otherwise
+#Word existence assumed
+def isAbbreviation(word, soup):
+    try:
+        text = soup.find("h3", class_="css-xboiwi ea1n8qa0").get_text()
+        if (text[0:3] == "or ") and (text[4::2] == "."*len(text[4::2])):
+            return True
+        else:
+            return False
+    #occurs when given class not present
+    except:
+        return False 
+    
 
 #Returns true if word in babynames.com, false otherwise
 def isName(word):
@@ -32,13 +48,13 @@ def isName(word):
    soup = BeautifulSoup(req.content, 'html.parser')
    if soup.find("h1").get_text() == "Whoops! Not Found":
        return False
-    return True
+   return True
 
 #Returns true if word is a valid word or name, false otherwise
 #adds word to wordsChecked dictionary with value True if real word, false otherwise
 #dictionary meant to increase efficiency by decreasing checks
 def isWordOrName(word):
-    if (mayBeName(word) and isName(word)) or isWord(word):
+    if isWord(word)[0] or (mayBeName(word) and isName(word)):
         dictionaries.wordsChecked[word] = True
         return True
     dictionaries.wordsChecked[word] = False
@@ -63,9 +79,7 @@ def correctWord(word):
                 corrections.add(newWord)
     return corrections
 
-t = time.time()
-print(correctWord("cabbagd"))
-print(time.time() - t)
+print(isWord("hello"))
     
     
 
