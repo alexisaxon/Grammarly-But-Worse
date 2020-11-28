@@ -22,16 +22,13 @@ conciseness, readability, and fluency using artificial intelligence. They also l
 for consistency in spelling of words with multiple spellings (ex behavior and
 behaviour), which I may add to my project if time permits.
 
-Structural Plan: Provided that I end up including both typing mode and file upload
-mode, I will use separate files for the user interface of each one and a third file
-containing the functions used in both modes (ex spelling correction). If I need to
-make use of very long dictionaries or lists (ex containing words that have multiple
-correct spellings), these will be placed in a fourth file so they do not clutter
-up the other files. My first two files will have separate functions for Model, View,
-and Controller, as required by the 112 Graphics module, and several helper functions
-so that no function becomes too long. In the third file, I will aim to have separate
-functions for each feature (ex spelling correction or capitalization) with additional
-helper functions as needed.
+Structural Plan: I will use separate files for the front- and back-ends of my project. 
+Long dictionaries and lists (ex containing words that have multiple correct spellings)  
+will be placed in a third file so they do not clutter up the other files. My front-end 
+file will have separate functions for Model, View, and Controller, as required by the 
+112 Graphics module, and several helper functions so that no function becomes too long. 
+In the back-end file, I will aim to have separate functions for each feature (ex spelling 
+correction or capitalization) with additional helper functions as needed.
 
 Algorithmic Plan: When a word is deemed to be spelling incorrectly (because it is not
 in an online dictionary or online list of names), the program will develop a list of
@@ -41,10 +38,13 @@ a dictionary containing these letters. Each generated "word" will then be passed
 the same online dictionary and baby name list, looking for matches. If a match is found,
 it will be presented to the user as a possible correction.
 
-Timeline Plan:
-
+Timeline Plan: I have imposed the following deadlines on myself:
+TP1: Have a functional spell-check feature (not yet integrated into the user interface) - Done
+TP2: Have a complete user interface that is fully integrated with existing back-end features - Progress
+TP3: Add additional features as time permits and integrate them into the user interface - Not Yet Begun
 
 Version Control Plan: I will use Git and a private Github repository to store my code.
-See image at [url]
+The image is included as a Github.JPG in this folder.
 
-Modules: I will be using Requests and BS4
+Modules: I will be using Requests and BS4, both of which I have passed tech demos with. If
+time permits after reaching MVP, I may use ntlk to enhance my project further.
