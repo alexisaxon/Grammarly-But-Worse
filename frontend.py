@@ -10,8 +10,15 @@ def appStarted(app):
     app.buttonLocations = [] #(x, y) of top left for each button
     app.buttonMargin = 10
     app.selectedWord = None #will be index
-    app.words = [] #list of words in document
+    app.words = ["Insert", "your", "text", "here."] #list of words in document
     app.buttonHeight = 30
+    app.textboxSelected = False
+    app.fullText = "Insert your text here."
+    app.maxChars = int(round(app.width/11))
+
+
+def mousePressed(app, event):
+    pass
 
 #returns True if user clicked button with 'text', false otherwise    
 def buttonClicked(app, text, x, y):
@@ -60,6 +67,30 @@ def drawButtons(app, canvas):
         canvas.create_text(startWidth + buttonWidth//2, startHeight + app.buttonHeight//2,\
             text=app.buttons[i])
 
+#may want to move the calculations elsewhere
+def drawTextbox(app, canvas):
+    startHeight = 25 + app.height//15
+    canvas.create_rectangle(13, startHeight, app.width//2 - 13, app.height - 20, fill='lightgrey', \
+        outline='lightgrey')
+    lineTotal = 0
+    startX = 15
+    startY = startHeight
+    currentLine = 0
+    textLines = [""]
+    for word in app.words:
+        if lineTotal + len(word) > app.maxChars:
+            textLines.append(word)
+            lineTotal = len(word)
+            currentLine += 1
+        else:
+            textLines[currentLine] += " " + word
+            lineTotal += len(word) + 1
+    toPrint = ""
+    for line in textLines:
+        toPrint += line + "\n"
+    canvas.create_text(startX, startY, text=toPrint, anchor="nw")
+
+
 def redrawAll(app, canvas):
     canvas.create_rectangle(0, 0, app.width, app.height, outline="lightyellow", fill="lightyellow")
     canvas.create_rectangle(5, 5, app.width - 5, app.height - 5, outline='red')
@@ -71,5 +102,6 @@ def redrawAll(app, canvas):
     canvas.create_text(app.width//2, app.height//30 + 13, text="Grammarly But Worse", \
         font=f"Times {fontSize} bold")
     drawButtons(app, canvas)
+    drawTextbox(app, canvas)
 
 runApp(width=800, height=600)
