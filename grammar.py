@@ -39,7 +39,6 @@ def isAbbreviation(word, soup):
     #occurs when given class not present
     except:
         return False 
-    
 
 #Returns true if word in babynames.com, false otherwise
 def isName(word):
@@ -50,36 +49,45 @@ def isName(word):
        return False
    return True
 
-#Returns true if word is a valid word or name, false otherwise
+#Returns tuple with first bool indicating whether it is a word/name, second if it's an abbreviation
 #adds word to wordsChecked dictionary with value True if real word, false otherwise
 #dictionary meant to increase efficiency by decreasing checks
 def isWordOrName(word):
-    if isWord(word)[0] or (mayBeName(word) and isName(word)):
-        dictionaries.wordsChecked[word] = True
-        return True
-    dictionaries.wordsChecked[word] = False
-    return False
-
+    word = word.strip()
+    if word.startswith("\""):
+        word = word[1:]
+    punctuation = {".", "?", "!", "\"", "\'", ";", ":"}
+    for thing in punctuation:
+        if word.endswith(thing):
+            word = word[:len(word) - 1]
+            break
+    wordStatus, abbrevStatus = isWord(word)
+    if wordStatus or (mayBeName(word) and isName(word)):
+        dictionaries.wordsChecked[word] = (True, abbrevStatus)
+    else:
+        dictionaries.wordsChecked[word] = (False, False)
+    return dictionaries.wordsChecked[word]
+    
 #returns True if first letter is capitalized and others are not
 def mayBeName(word):
     return len(word) > 1 and word[0].isupper() and word[1:].islower()
 
-#input misspelled word
+#input misspelled word and T/F for if it's an abbreviation
 #output set of real words/names that could be confused with word
-def correctWord(word):
+def correctWord(word, abbrevStatus):
     corrections = set()
     for letter in list(word):
         for option in dictionaries.characters[letter]:
             newWord = word.replace(letter, option, 1)
             #if word already checked, use previous result
             if newWord in dictionaries.wordsChecked:
-                if dictionaries.wordsChecked[newWord]:
+                if dictionaries.wordsChecked[newWord][0] and \
+                    dictionaries.wordsChecked[newWord][1] == abbrevStatus:
                     corrections.add(newWord)
-            elif isWordOrName(newWord):
-                corrections.add(newWord)
+            else:
+                newWordStatus, newAbbrevStatus = isWordOrName(newWord)
+                if newWordStatus and newAbbrevStatus == abbrevStatus:
+                    corrections.add(newWord)
     return corrections
 
-print(isWord("hello"))
-    
-    
-
+print(correctWord("eaf", True))
