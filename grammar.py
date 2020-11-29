@@ -73,21 +73,23 @@ def mayBeName(word):
     return len(word) > 1 and word[0].isupper() and word[1:].islower()
 
 #input misspelled word and T/F for if it's an abbreviation
-#output set of real words/names that could be confused with word
+#output list of real words/names that could be confused with word
 def correctWord(word, abbrevStatus):
-    corrections = set()
+    corrections = []
     for letter in list(word):
         for option in dictionaries.characters[letter]:
             newWord = word.replace(letter, option, 1)
+            if newWord in dictionaries.mostCommonWords:
+                #puts common words at front for better user experience
+                corrections.insert(0, newWord)
             #if word already checked, use previous result
-            if newWord in dictionaries.wordsChecked:
+            elif newWord in dictionaries.wordsChecked:
                 if dictionaries.wordsChecked[newWord][0] and \
                     dictionaries.wordsChecked[newWord][1] == abbrevStatus:
-                    corrections.add(newWord)
+                    corrections.append(newWord)
             else:
                 newWordStatus, newAbbrevStatus = isWordOrName(newWord)
                 if newWordStatus and newAbbrevStatus == abbrevStatus:
-                    corrections.add(newWord)
+                    corrections.append(newWord)
+    corrections.append(f"Add '{word}' to Personal Dictionary")
     return corrections
-
-print(correctWord("eaf", True))
