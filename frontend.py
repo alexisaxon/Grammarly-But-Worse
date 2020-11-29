@@ -1,7 +1,7 @@
 import module_manager
 module_manager.review()
 from cmu_112_graphics import *
-import grammar
+import grammar as g
 
 def appStarted(app):
     app.buttons = []
@@ -13,11 +13,12 @@ def appStarted(app):
     app.buttonHeight = 30
     app.textboxSelected = False
     app.fullText = "Insert your text here."
-    app.maxChars = int(round(app.width/11))
+    app.maxChars = int(round(app.width/11.5)) #occasionally goes off text box
     app.textboxBorders = (13, 25 + app.height//15, app.width//2 - 13, app.height - 20)
     # (x0, y0, x1, y1) of textbox borders
     app.cursorLocation = 0 #string index
     app.cursorChar = "|"
+    app.fullTextWithCursor = app.cursorChar + app.fullText
 
 #returns True if user clicked button with 'text', false otherwise    
 def buttonClicked(app, text, x, y):
@@ -36,8 +37,10 @@ def typeACharacter(app, c):
     app.fullText = app.fullText[0:app.cursorLocation] + c + \
         app.fullText[app.cursorLocation:]
     app.cursorLocation += 1
+    app.fullTextWithCursor = app.fullText[0:app.cursorLocation] + app.cursorChar + \
+        app.fullText[app.cursorLocation:]
     createWordList(app, app.fullText)
-    app.wordsRepr = app.fullText.split(" ")
+    app.wordsRepr = app.fullTextWithCursor.split(" ")
 
 def createWordList(app, text):
     app.words = app.fullText.split(" ")
@@ -46,32 +49,43 @@ def createWordList(app, text):
             temp = app.words[i]
             index = temp.find("\n")
             app.words[i] = temp[0:index]
-            app.words.insert(i+1,temp[index+1:]) 
+            app.words.insert(i+1,temp[index+1:])
+    app.wordsRepr = app.fullText.split(" ") 
 
 #allows user to type in textbox
 #Professor Kosbie gave me high-level advice on how to implement the textbox in 112 Graphics
 #To do: figure out how to implement shift+letter for uppercase
 def keyPressed(app, event):
     if app.textboxSelected:
-        if event.key in "abcdefghijklmnopqrstuvwxyz./,!@#$%^&*()_-+=\][}{';:><?\"\'\\":
+        if event.key in "abcdefghijklmnopqrstuvwxyz./,!@#$%^&*()_-+=\][}{';:><?\"\'\\" or\
+        event.key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
             typeACharacter(app, event.key)
         elif event.key == "Space":
             typeACharacter(app, " ")
         elif event.key == "Enter":
             app.fullText = app.fullText[0:app.cursorLocation] + "\n" + \
                 app.fullText[app.cursorLocation:]
+            app.cursorLocation += 1
             createWordList(app, app.fullText)
             app.wordsRepr = app.fullText.split(" ")
-            print(app.words)
         elif event.key == "Backspace" and app.cursorLocation != 0:
             app.fullText = app.fullText[0:app.cursorLocation - 1] + \
                 app.fullText[app.cursorLocation:]
             app.cursorLocation -= 1
-            app.words = app.fullText.split(" ")
+            createWordList(app, app.fullText)
         elif event.key == "Left" and app.cursorLocation != 0:
             app.cursorLocation -= 1
         elif event.key == "Right" and app.cursorLocation < len(app.fullText):
             app.cursorLocation += 1
+        if event.key in ";:'\".?!" or event.key == "Enter" or event.key == "Space":
+            print("yay")
+            wordStatus, abbrevStatus = g.isWordOrName("womsn")
+            if not wordStatus:
+                print("hi")
+                app.buttons = g.correctWord("womsn", abbrevStatus)
+                print(app.buttons)
+                calculateButtonLocations(app)
+                print(app.buttonLocations)
 
 def mousePressed(app, event):
     x0, y0, x1, y1 = app.textboxBorders
@@ -100,7 +114,6 @@ def calculateButtonLocations(app):
             startWidth = app.width//2 + app.buttonMargin
             startHeight += app.buttonMargin + app.buttonHeight
         app.buttonLocations.append((startWidth, startHeight))
-        print(app.buttonLocations)
         startWidth += buttonWidth + app.buttonMargin
 
 #buttons are dynamically sized and formatted based on length
