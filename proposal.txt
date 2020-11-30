@@ -36,7 +36,10 @@ possible intended words by replacing each letter with letters that are close to 
 a standard keyboard (indicating a typo) or possessing a similar sound by going through
 a dictionary containing these letters. Each generated "word" will then be passed through
 the same online dictionary and baby name list, looking for matches. If a match is found,
-it will be presented to the user as a possible correction.
+it will be presented to the user as a possible correction. To speed up this algorithm, I 
+will also have a local set with a few hundred very common English words, which will also
+allow me to present these possibilities first to the user since they are more likely to be
+the intended word than an average word.
 
 Timeline Plan: I have imposed the following deadlines on myself:
 TP1: Have a functional spell-check feature (not yet integrated into the user interface) - Done
@@ -44,7 +47,7 @@ TP2: Have a complete user interface that is fully integrated with existing back-
 TP3: Add additional features as time permits and integrate them into the user interface - Not Yet Begun
 
 Version Control Plan: I will use Git and a private Github repository to store my code.
-The image is included as a Github.JPG in this folder.
+The image is included as Github.JPG in this folder.
 
-Modules: I will be using Requests and BS4, both of which I have passed tech demos with. If
+Modules: I will be using Requests and BS4, both of which I have passed tech demos for. If
 time permits after reaching MVP, I may use ntlk to enhance my project further.
