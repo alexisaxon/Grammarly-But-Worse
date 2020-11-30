@@ -7,12 +7,12 @@ def appStarted(app):
     app.buttons = []
     app.buttonLocations = [] #(x, y) of top left for each button
     app.buttonMargin = 10
-    app.selectedWord = None #will be index
-    app.words = ["Insert", "your", "text", "here."] #list of words in document
-    app.wordsRepr = ["Insert", "your", "text", "here."] #includes escape sequences
+    app.selectedWord = 4
+    app.words = ["Insert", "your", "text", "here.", "womsn"] #list of words in document
+    app.wordsRepr = ["Insert", "your", "text", "here.", "womsn"] #includes escape sequences
     app.buttonHeight = 30
     app.textboxSelected = False
-    app.fullText = "Insert your text here."
+    app.fullText = "Insert your text here. womsn"
     app.maxChars = int(round(app.width/11.5)) #occasionally goes off text box
     app.textboxBorders = (13, 25 + app.height//15, app.width//2 - 13, app.height - 20)
     # (x0, y0, x1, y1) of textbox borders
@@ -79,10 +79,10 @@ def keyPressed(app, event):
             app.cursorLocation += 1
         if event.key in ";:'\".?!" or event.key == "Enter" or event.key == "Space":
             print("yay")
-            wordStatus, abbrevStatus = g.isWordOrName("womsn")
+            wordStatus, abbrevStatus = g.isWordOrName(app.words[app.selectedWord])
             if not wordStatus:
                 print("hi")
-                app.buttons = g.correctWord("womsn", abbrevStatus)
+                app.buttons = g.correctWord(app.words[app.selectedWord], abbrevStatus)
                 print(app.buttons)
                 calculateButtonLocations(app)
                 print(app.buttonLocations)
@@ -93,28 +93,55 @@ def mousePressed(app, event):
     if event.x > app.width//2 + app.buttonMargin: 
         app.textboxSelected = False
         for text in app.buttons:
+            specialButtons = {"Ignore", f"Add {text} to personal dictionary", \
+                "Keep searching"}
             if buttonClicked(app, text, event.x, event.y):
-                try:
-                    app.words = app.words[0:app.selectedWord] + \
-                        app.words[app.selectedWord:].replace(app.words[app.selectedWord], text, 1)
-                except:
-                    print("Error: selectedWord probably not defined")
+                if text not in specialButtons:
+                    try:
+                        app.words = app.words[0:app.selectedWord] + \
+                            app.words[app.selectedWord:].replace(app.words[app.selectedWord], text, 1)
+                    except:
+                        print("Error: selectedWord probably not defined")
+                elif text == f"Add {text} to personal dictionary":
+                    dictionaries.personalDictionary.add(text)
+                elif text == "Keep searching":
+                    pass
+                app.buttons = []
+                app.buttonLocations = []
     elif x1 >= event.x >= x0 and y1 >= event.y >= y0:
         app.textboxSelected = True
     else:
         app.textboxSelected = False
 
+#shifts all buttons starting at 'first' index and ending just before
+#'last' index until they are center aligned
+def buttonShiftRow(app, first, last, shiftBy):
+    for i in range(first, last):
+        app.buttonLocations[i] = (app.buttonLocations[i][0] + shiftBy, \
+            app.buttonLocations[i][1])
+
 #should call when new word selected
 def calculateButtonLocations(app):
     startWidth = app.width//2 + app.buttonMargin
     startHeight = 25 + app.height//15
-    for text in app.buttons:
+    firstButtonInRow = 0
+    for i in range(len(app.buttons)):
+        text = app.buttons[i]
         buttonWidth = len(text) * 10
         if startWidth + buttonWidth > app.width - app.buttonMargin:
             startWidth = app.width//2 + app.buttonMargin
             startHeight += app.buttonMargin + app.buttonHeight
+            if i != 0: #since prevEnd not meaningfully defined yet
+                buttonShiftRow(app, firstButtonInRow, i, (app.width - app.buttonMargin -\
+                    prevEnd)//2)
+            firstButtonInRow = i
         app.buttonLocations.append((startWidth, startHeight))
         startWidth += buttonWidth + app.buttonMargin
+        prevEnd = startWidth + buttonWidth
+    buttonShiftRow(app, firstButtonInRow, i + 1, (app.width - app.buttonMargin -\
+                    prevEnd)//2) 
+    #shift last row since we've always been one behind current
+
 
 #buttons are dynamically sized and formatted based on length
 def drawButtons(app, canvas):
@@ -129,8 +156,12 @@ def drawButtons(app, canvas):
 #may want to move the calculations elsewhere
 def drawTextbox(app, canvas):
     startHeight = 25 + app.height//15
-    canvas.create_rectangle(app.textboxBorders, fill='lightgrey', \
-        outline='lightgrey')
+    if app.textboxSelected:
+        canvas.create_rectangle(app.textboxBorders, fill='lightgrey', \
+            outline='gold',width=2)
+    else:
+        canvas.create_rectangle(app.textboxBorders, fill='lightgrey', \
+            width=0)
     lineTotal = 0
     startX = 15
     startY = startHeight
