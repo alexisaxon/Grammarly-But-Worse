@@ -93,3 +93,5 @@ def correctWord(word, abbrevStatus):
                     corrections.append(newWord)
     corrections.append(f"Add '{word}' to Personal Dictionary")
     return corrections
+
+print(correctWord("wprd", False))
