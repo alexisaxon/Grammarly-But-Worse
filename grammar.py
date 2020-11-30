@@ -92,6 +92,8 @@ def correctWord(word, abbrevStatus):
                 if newWordStatus and newAbbrevStatus == abbrevStatus:
                     corrections.append(newWord)
     corrections.append(f"Add '{word}' to Personal Dictionary")
+    corrections.append("Keep searching")
+    corrections.append("Ignore")
     return corrections
 
-print(correctWord("wprd", False))
+# print(correctWord("wprd", False))
