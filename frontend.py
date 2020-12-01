@@ -19,19 +19,17 @@ def appStarted(app):
     app.cursorLocation = 0 #string index
     app.cursorChar = "|"
     app.fullTextWithCursor = app.cursorChar + app.fullText
+    app.textLines = [["Insert your text here. womsn"]]
 
 #returns True if user clicked button with 'text', false otherwise    
 def buttonClicked(app, text, x, y):
     buttonWidth = 10*len(text)
-    try:
-        i = app.buttons.index(text)
-        left = app.buttonLocations[i][0]
-        top = app.buttonLocations[i][1]
-        if x >= left and x <= left + buttonWidth and y >= top and y <= top + app.buttonHeight:
-            return True
-        return False
-    except:
-        print("text not in button list")
+    i = app.buttons.index(text)
+    left = app.buttonLocations[i][0]
+    top = app.buttonLocations[i][1]
+    if x >= left and x <= left + buttonWidth and y >= top and y <= top + app.buttonHeight:
+        return True
+    return False
 
 def typeACharacter(app, c):
     app.fullText = app.fullText[0:app.cursorLocation] + c + \
@@ -42,6 +40,7 @@ def typeACharacter(app, c):
     createWordList(app, app.fullText)
     app.wordsRepr = app.fullTextWithCursor.split(" ")
 
+#updates app.words with new words and app.wordsRepr, which includes \n
 def createWordList(app, text):
     app.words = app.fullText.split(" ")
     for i in range(len(app.words)):
@@ -81,33 +80,33 @@ def keyPressed(app, event):
             print("yay")
             wordStatus, abbrevStatus = g.isWordOrName(app.words[app.selectedWord])
             if not wordStatus:
-                print("hi")
                 app.buttons = g.correctWord(app.words[app.selectedWord], abbrevStatus)
-                print(app.buttons)
                 calculateButtonLocations(app)
-                print(app.buttonLocations)
 
 def mousePressed(app, event):
     x0, y0, x1, y1 = app.textboxBorders
     #don't do button checks if on other side of canvas
     if event.x > app.width//2 + app.buttonMargin: 
         app.textboxSelected = False
-        for text in app.buttons:
-            specialButtons = {"Ignore", f"Add {text} to personal dictionary", \
+        specialButtons = {"Ignore", f"Add {app.words[app.selectedWord]} to personal dictionary", \
                 "Keep searching"}
+        for text in app.buttons:  
             if buttonClicked(app, text, event.x, event.y):
                 if text not in specialButtons:
-                    try:
-                        app.words = app.words[0:app.selectedWord] + \
-                            app.words[app.selectedWord:].replace(app.words[app.selectedWord], text, 1)
-                    except:
-                        print("Error: selectedWord probably not defined")
+                    app.words = app.words[0:app.selectedWord] + \
+                        [text] + app.words[app.selectedWord + 1:]
+                    app.fullText = ""
+                    for word in app.words:
+                        app.fullText += " " + word
+                    app.fullText = app.fullText[1:]
+                    createWordList(app, app.fullText)
                 elif text == f"Add {text} to personal dictionary":
                     dictionaries.personalDictionary.add(text)
                 elif text == "Keep searching":
                     pass
                 app.buttons = []
                 app.buttonLocations = []
+                break
     elif x1 >= event.x >= x0 and y1 >= event.y >= y0:
         app.textboxSelected = True
     else:
@@ -132,12 +131,12 @@ def calculateButtonLocations(app):
             startWidth = app.width//2 + app.buttonMargin
             startHeight += app.buttonMargin + app.buttonHeight
             if i != 0: #since prevEnd not meaningfully defined yet
-                buttonShiftRow(app, firstButtonInRow, i, (app.width - app.buttonMargin -\
-                    prevEnd)//2)
+                buttonShiftRow(app, firstButtonInRow, i, (app.width//2 - app.buttonMargin -\
+                    prevEnd//2))
             firstButtonInRow = i
         app.buttonLocations.append((startWidth, startHeight))
-        startWidth += buttonWidth + app.buttonMargin
         prevEnd = startWidth + buttonWidth
+        startWidth += buttonWidth + app.buttonMargin
     buttonShiftRow(app, firstButtonInRow, i + 1, (app.width - app.buttonMargin -\
                     prevEnd)//2) 
     #shift last row since we've always been one behind current
