@@ -75,6 +75,8 @@ def mayBeName(word):
 #input misspelled word and T/F for if it's an abbreviation
 #output list of real words/names that could be confused with word
 def correctWord(word, abbrevStatus):
+    if word in dictionaries.completedCorrections:
+        return dictionaries.completedCorrections[word]
     corrections = []
     for letter in list(word):
         for option in dictionaries.characters[letter]:
@@ -94,6 +96,7 @@ def correctWord(word, abbrevStatus):
     corrections.append(f"Add '{word}' to Personal Dictionary")
     corrections.append("Keep searching")
     corrections.append("Ignore")
+    dictionaries.completedCorrections[word] = corrections
     return corrections
 
 # print(correctWord("wprd", False))
