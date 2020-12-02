@@ -48,15 +48,26 @@ wordsChecked = {}
 #words user has indicated are "real" to them
 personalDictionary = set()
 
-#maps misspellings to the corrections provided
+#maps misspellings to list of corrections provided
 completedCorrections = dict()
 
-def cleanUpText(word, badChar):
+def cleanUpText(word, badChar, theSet):
     while word.endswith(badChar):
         word = word[:len(badChar) - 1]
     while word.startswith(badChar):
         word = word[len(badChar):]
+    if badChar in word:
+        print("y")
+        index = word.find(badChar)
+        word = word[0:index]
+        otherWords = cleanUpText(word[index+len(badChar):], badChar, theSet)
+        print(otherWords)
+        theSet.add(otherWords)
     return word
+
+a = set()
+cleanUpText("hi\nl\na\n", "\n", a)
+print(a)
 
 #2 lines beginning with "[s.extract()" gotten from 
 # https://stackoverflow.com/questions/1936466/beautifulsoup-grab-visible-webpage-text
@@ -74,10 +85,8 @@ def makeStarterDict():
         if word == "–" or word == "" or word.startswith("http"):
             next
         for element in lst:
-            word = cleanUpText(word, element)
-        badChars = "!@#$%^&*()_-=+;:'\"][}{/?><.,"
-        word = word.strip('\"')
-        word = word.strip("\'")
+            word = cleanUpText(word, element, mostCommonWords)
+        badChars = "!@#$%^&*()_-=+”;:'\"][}{/?><.“,"
         word = word.strip(badChars)
         while "\n" in word:
             temp = word
@@ -92,5 +101,6 @@ def makeStarterDict():
             mostCommonWords.add(word.lower())
     return mostCommonWords
     
-mostCommonWords = makeStarterDict()
-print(mostCommonWords)
+#mostCommonWords = makeStarterDict()
+#print(mostCommonWords)
+#print(len(mostCommonWords))
