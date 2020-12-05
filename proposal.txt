@@ -51,3 +51,10 @@ The image is included as Github.JPG in this folder.
 
 Modules: I will be using Requests and BS4, both of which I have passed tech demos for. If
 time permits after reaching MVP, I may use ntlk to enhance my project further.
+
+TP2 Update:
+In collaboration with my TP mentor, I decided to add an additional row of buttons
+above the textbox to allow the user to bold, underline, copy, paste, etc. In 
+addition, due to the availability of time, I am unlikely to include the 'upload'
+mode that I originally planned, which also means that my project will not need
+a splash screen.
