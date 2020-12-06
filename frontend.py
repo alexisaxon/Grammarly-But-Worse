@@ -2,6 +2,7 @@ import module_manager
 module_manager.review()
 from cmu_112_graphics import *
 import grammar as g
+import PIL
 
 def appStarted(app):
     app.cursorLocation = 0 #string index
@@ -12,6 +13,13 @@ def appStarted(app):
     app.fullTextWithCursor = app.cursorChar + app.fullText
     app.highlight = None
     #tuple with index of first and last words to highlight
+    app.typingMode = []
+    #[u, b] indicates that new words should be underlined and bold
+    app.clipboard = ""
+    app.image = None
+    app.lastTried = []
+    app.theLabel = ""
+    app.lastAbbrev = ""
 
 def startTextBox(app):
     app.textboxSelected = False
@@ -28,16 +36,16 @@ def startButtons(app):
     app.buttonLocations = [] #(x, y) of top left for each button
     app.buttonMargin = 10
     app.buttonHeight = 30
-    app.textButtons = ["Bold", "Italicize", "Underline", "Copy", "Paste"]
+    app.textButtons = ["Bold", "Italicize", "Underline", "Copy", "Paste", "Save"]
 
 def startWords(app):
-    app.selectedWord = 4
-    app.words = ["Insert", "your", "text", "here.", "womsn"] #list of words in document
-    app.wordsRepr = ["Insert", "your", "text", "here.", "womsn"] #includes escape sequences
-    app.fullText = "Insert your text here. womsn"
-    app.textLines = ["Insert your text here. womsn"]
+    app.selectedWord = 0
+    app.words = ["Insert", "your", "text", "here."] #list of words in document
+    app.wordsRepr = ["|Insert", "your", "text", "here."] #includes escape sequences
+    app.fullText = "Insert your text here."
+    app.textLines = ["Insert your text here."]
     app.lineLengths = [len(app.textLines[0])]
-    app.wordFeatures = [[], [], [], [], []]
+    app.wordFeatures = [[], [], [], []]
     #an entry of [i,b] would indicate that word is italicized and bolded
 
 #returns True if user clicked button with 'text', false otherwise    
@@ -55,7 +63,7 @@ def buttonClicked(app, text, x, y):
     except:
         i = app.textButtons.index(text)
         #update below if change other constants
-        startWidths = [20, 70, 170, 270, 320]
+        startWidths = [20, 70, 170, 270, 320, 380]
         top = app.height // 15 + 25
         left = startWidths[i]
         if x >= left and x <= left + buttonWidth and y >= top and y <= top + app.buttonHeight:
@@ -93,31 +101,33 @@ def buttonShiftRow(app, first, last, shiftBy):
 
 #should call when new word selected
 def calculateButtonLocations(app):
-    app.buttonLocations = []
-    startWidth = app.width//2 + app.buttonMargin
-    startHeight = 25 + app.height//15
-    firstButtonInRow = 0
-    for i in range(len(app.buttons)):
-        text = app.buttons[i]
-        buttonWidth = len(text) * 10
-        if startWidth + buttonWidth > app.width - app.buttonMargin:
-            startWidth = app.width//2 + app.buttonMargin
-            startHeight += app.buttonMargin + app.buttonHeight
-            if i != 0: #since prevEnd not meaningfully defined yet
-                buttonShiftRow(app, firstButtonInRow, i, (app.width//2 - app.buttonMargin -\
-                    prevEnd//2))
-            firstButtonInRow = i
-        app.buttonLocations.append((startWidth, startHeight))
-        prevEnd = startWidth + buttonWidth
-        startWidth += buttonWidth + app.buttonMargin
-    buttonShiftRow(app, firstButtonInRow, i + 1, (app.width - app.buttonMargin -\
-                    prevEnd)//2) 
-    #shift last row since we've always been one behind current
+    if len(app.buttons) != 0:
+        app.buttonLocations = []
+        startWidth = app.width//2 + app.buttonMargin
+        startHeight = 25 + app.height//15
+        firstButtonInRow = 0
+        for i in range(len(app.buttons)):
+            text = app.buttons[i]
+            buttonWidth = len(text) * 10
+            if startWidth + buttonWidth > app.width - app.buttonMargin:
+                startWidth = app.width//2 + app.buttonMargin
+                startHeight += app.buttonMargin + app.buttonHeight
+                if i != 0: #since prevEnd not meaningfully defined yet
+                    buttonShiftRow(app, firstButtonInRow, i, (app.width//2 - app.buttonMargin -\
+                        prevEnd//2))
+                firstButtonInRow = i
+            app.buttonLocations.append((startWidth, startHeight))
+            prevEnd = startWidth + buttonWidth
+            startWidth += buttonWidth + app.buttonMargin
+        buttonShiftRow(app, firstButtonInRow, len(app.buttons), (app.width - app.buttonMargin -\
+                        prevEnd)//2) 
+        #shift last row since we've always been one behind current
 
 def calculateTextLines(app):
     lineTotal = 0
     currentLine = 0
     textLines = [""]
+    app.lineLengths = []
     for word in app.wordsRepr:
         if lineTotal + len(word) > app.maxChars:
             textLines.append(word)
@@ -160,6 +170,11 @@ def calculateIndexOfWord(app, index):
         startIndex += 1 + len(word)
     return startIndex
 
+#From 112 website (Animations Part 3), modified slightly to say app rather than self
+def saveImage(app):
+    snapshotImage = app.getSnapshot()
+    app.image = app.scaleImage(snapshotImage, 0.4)
+    app.saveSnapshot()
 #--------------------------------CONTROL-----------------------------------------
 
 #allows user to type in textbox
@@ -200,24 +215,51 @@ def keyPressed(app, event):
         elif event.key == "Right" and app.cursorLocation < len(app.fullText):
             app.cursorLocation += 1
         if event.key in ";:'\".?!" or event.key == "Enter" or event.key == "Space":
-            wordStatus, abbrevStatus = g.isWordOrName(app.words[app.selectedWord])
+            app.selectedWord = findWordIndexWithChar(app, app.cursorLocation - 1)
+            while app.words[app.selectedWord] == "" and app.selectedWord > 0:
+                app.selectedWord -= 1
+            focusWord = app.words[app.selectedWord]
+            focusWord = focusWord.strip(",\'\":;.?/!")
+            wordStatus, abbrevStatus = g.isWordOrName(focusWord)
             if not wordStatus:
-                app.buttons = g.correctWord(app.words[app.selectedWord], abbrevStatus)
+                app.buttons, app.lastTried = g.correctWord(app.words[app.selectedWord], abbrevStatus)
+                app.lastCorrections = app.buttons
                 calculateButtonLocations(app)
+                app.lastAbbrev = abbrevStatus
+            if len(app.words) > len(app.wordFeatures):
+                app.wordFeatures.insert(app.cursorLocation - 1, app.typingMode)
     wasHighlighted = False
 
 def mousePressed(app, event):
     x0, y0, x1, y1 = app.textboxBorders
     features = {"Underline":"u", "Bold":"b", "Italicize":"i"}
-    if event.x < app.width//2 and event.y < app.topOfTextbox:
+    if event.x < 1.25 * app.width//2 and event.y < app.topOfTextbox:
         for text in app.textButtons:
             if buttonClicked(app, text, event.x, event.y):
+                if text == "Save":
+                    saveImage(app)
+                    break
+                if text == "Paste":
+                    app.fullText = app.fullText[0:app.cursorLocation] + app.clipboard + \
+                        app.fullText[app.cursorLocation:]
+                    app.cursorLocation += len(app.clipboard)
+                    app.words = app.fullText.split(" ")
+                    createWordList(app, app.fullText)
+                    break
                 if app.highlight != None:
                     for i in range(app.highlight[0], app.highlight[1] + 1):
-                        if features[text] not in app.wordFeatures[i]:
-                            app.wordFeatures[i].append(features[text])
-                        else:
-                            app.wordFeatures[i].remove(features[text])
+                        try:
+                            if features[text] not in app.wordFeatures[i]:
+                                app.wordFeatures[i].append(features[text])
+                            else:
+                                app.wordFeatures[i].remove(features[text])
+                        except: 
+                            #means button is copy
+                            app.clipboard = ""
+                            for i in range(app.highlight[0], app.highlight[1] + 1):
+                                app.clipboard += app.words[i] + " "
+                            app.clipboard = app.clipboard[:len(app.clipboard) - 1]
+                break
     #don't do button checks if on other side of canvas
     elif event.x > app.width//2 + app.buttonMargin: 
         app.textboxSelected = False
@@ -236,12 +278,13 @@ def mousePressed(app, event):
                 elif text == f"Add {text} to personal dictionary":
                     dictionaries.personalDictionary.add(text)
                 elif text == "Keep searching":
-                    pass
+                    g.keepSearching(app.lastTried, app.lastAbbrev)
                 app.buttons = []
                 app.buttonLocations = []
                 break
     elif x1 >= event.x >= x0 and y1 >= event.y >= y0:
         app.textboxSelected = True
+        app.cursorLocation = findNearestChar(app, event.x, event.y)
     else:
         app.textboxSelected = False
     app.highlight = None
@@ -274,14 +317,14 @@ def mouseDragged(app, event):
         nearestLetter = findNearestChar(app, x, y)
         #index
         nearestWord = findWordIndexWithChar(app, nearestLetter)
-        if app.highlight == None:
+        if app.highlight == None or app.highlight == (nearestWord, nearestWord):
             app.highlight = (nearestWord, nearestWord)
-        elif app.highlight[0] + 1 == nearestWord:
-            app.highlight = (app.highlight[0] + 1, app.highlight[1])
         elif app.highlight[0] - 1 == nearestWord:
             app.highlight = (app.highlight[0] - 1, app.highlight[1])
         elif app.highlight[1] + 1 == nearestWord:
             app.highlight = (app.highlight[0], app.highlight[1] + 1)
+        elif app.highlight[0] + 1 == nearestWord:
+            app.highlight = (app.highlight[0] + 1, app.highlight[1])
         elif app.highlight[1] - 1 == nearestWord:
             app.highlight = (app.highlight[0], app.highlight[1] - 1)
         else:
@@ -359,6 +402,9 @@ def drawText(app, canvas):
     index = 0
     for i in range(len(app.textLines)):
         for word in app.textLines[i].split(" "):
+            if word == "":
+                index -= 1
+                next
             features = app.wordFeatures[index]
             f = featureTranslation(features)
             canvas.create_text(startX, startY, text=word, anchor="nw",\
