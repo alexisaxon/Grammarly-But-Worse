@@ -74,7 +74,9 @@ def mayBeName(word):
 
 #input misspelled word and T/F for if it's an abbreviation
 #output list of real words/names that could be confused with word
+
 def correctWord(word, abbrevStatus):
+    tried = []
     if word in dictionaries.completedCorrections:
         return dictionaries.completedCorrections[word]
     corrections = []
@@ -93,10 +95,26 @@ def correctWord(word, abbrevStatus):
                 newWordStatus, newAbbrevStatus = isWordOrName(newWord)
                 if newWordStatus and newAbbrevStatus == abbrevStatus:
                     corrections.append(newWord)
+            tried.append(newWord)
     corrections.append(f"Add '{word}' to Personal Dictionary")
     corrections.append("Keep searching")
     corrections.append("Ignore")
     dictionaries.completedCorrections[word] = corrections
-    return corrections
+    return (corrections, tried)
 
-# print(correctWord("wprd", False))
+def keepSearching(lst, abbrevStatus):
+    corrections = []
+    tried = []
+    for word in lst:
+        newCorrections, newTried = correctWord(word, abbrevStatus)
+        if newCorrections not in corrections:
+            print(newCorrections)
+            corrections.append(newCorrections)
+        if newTried not in tried:
+            print(newTried)
+            tried.append(newTried)
+        if len(corrections) > 30:
+            break
+        lastCorrections = corrections
+        lastTried = tried
+    return [corrections, tried]
