@@ -12,7 +12,6 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'
     }
 
-
 #represents characters that may be confused with one another
 #that is, near each other on keyboard or having a similar sound
 characters = {"a": {"q", "w", "s", "z", "e", "u"}, 
@@ -42,6 +41,27 @@ characters = {"a": {"q", "w", "s", "z", "e", "u"},
             "y":{"e", "t", "h", "u"},
             "z":{"a", "s", "x"}}
 
+def makeCommonDigraphs():
+    commonDigraphs = dict()
+    url = "http://pi.math.cornell.edu/~mec/2003-2004/cryptography/subs/digraphs.html"
+    req = requests.get(url,headers)
+    soup = BeautifulSoup(req.content, 'html.parser')
+    digraphs = soup.find_all("td", align="left")[5::2]
+    for element in list(digraphs):
+        element = element.get_text()
+        if len(element) == 2:
+            first, second = element[0], element[1]
+            print(first, second)
+            try:
+                previous = commonDigraphs.get(first)
+                print(previous)
+                commonDigraphs[first] = previous.add(second)
+            except:
+                commonDigraphs[first] = {second}
+            print(commonDigraphs)
+    return commonDigraphs
+
+
 #word mapped to tuple with wordStatus, abbrevStatus
 wordsChecked = {}
 
@@ -56,23 +76,13 @@ def cleanUpText(word, badChar, theSet):
         word = word[:len(badChar) - 1]
     while word.startswith(badChar):
         word = word[len(badChar):]
-    if badChar in word:
-        print("y")
-        index = word.find(badChar)
-        word = word[0:index]
-        otherWords = cleanUpText(word[index+len(badChar):], badChar, theSet)
-        print(otherWords)
-        theSet.add(otherWords)
     return word
-
-a = set()
-cleanUpText("hi\nl\na\n", "\n", a)
-print(a)
 
 #2 lines beginning with "[s.extract()" gotten from 
 # https://stackoverflow.com/questions/1936466/beautifulsoup-grab-visible-webpage-text
+#During office hours, a TA informed me that some quotation marks use a different unicode character
+#than the ones on the keyboard, helping me to fix a bug in the line defining badChars
 def makeStarterDict():
-    t = time.time()
     mostCommonWords = set()
     url = "https://www.gonaturalenglish.com/1000-most-common-words-in-the-english-language/"
     req = requests.get(url, headers)
@@ -86,7 +96,6 @@ def makeStarterDict():
             next
         for element in lst:
             word = cleanUpText(word, element, mostCommonWords)
-        badChars = "!@#$%^&*()_-=+”;:'\"][}{/?><.“,"
         word = word.strip(badChars)
         while "\n" in word:
             temp = word
@@ -100,7 +109,12 @@ def makeStarterDict():
         if word != "homeenglish":
             mostCommonWords.add(word.lower())
     return mostCommonWords
-    
-#mostCommonWords = makeStarterDict()
+
+badChars = "!@#$%^*()_-=+”;:'\"][}{/?><.“,"
+for c in list(badChars):
+    characters[c] = set()
+mostCommonWords = makeStarterDict()
+commonDigraphs = makeCommonDigraphs()
+print(commonDigraphs)
 #print(mostCommonWords)
 #print(len(mostCommonWords))
