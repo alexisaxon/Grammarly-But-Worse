@@ -20,6 +20,7 @@ def appStarted(app):
     app.lastTried = []
     app.theLabel = ""
     app.lastAbbrev = ""
+    app.theLabel = ""
 
 def startTextBox(app):
     app.textboxSelected = False
@@ -153,7 +154,7 @@ def findNearestChar(app, x, y):
     lineNum = distancesFromY.index(min(distancesFromY))
     distancesFromX = []
     for i in range(0, app.lineLengths[lineNum]):
-        positionOfChar = 15 + len(app.textLines[lineNum][0:i])*7
+        positionOfChar = 15 + len(app.textLines[lineNum][0:i])*4
         distancesFromX.append(abs(x-positionOfChar))
     charPixel = min(distancesFromX)
     charNumInLine = distancesFromX.index(charPixel)
@@ -161,7 +162,12 @@ def findNearestChar(app, x, y):
     for line in app.textLines[0:lineNum]:
         total += len(line)
     total += charNumInLine
-    return total
+    #flag is false if quite far away
+    if charPixel > 20 or min(distancesFromY) > 20:
+        flag = False
+    else:
+        flag = True
+    return (total, flag)
 
 #calculates index of first letter in word in app.fullText based on index in app.words
 def calculateIndexOfWord(app, index):
@@ -193,7 +199,7 @@ def keyPressed(app, event):
         createWordList(app, app.fullText)
         app.wordsRepr = app.fullText.split(" ")
         app.highlight = None
-    if app.textboxSelected or wasHighlighted:
+    if (app.textboxSelected or wasHighlighted) and app.theLabel != "Please select an option before continuing":
         if event.key in "abcdefghijklmnopqrstuvwxyz./,!@#$%^&*()_-+=\][}{';:><?\"\'\\" or\
         event.key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
             typeACharacter(app, event.key)
@@ -214,7 +220,7 @@ def keyPressed(app, event):
             app.cursorLocation -= 1
         elif event.key == "Right" and app.cursorLocation < len(app.fullText):
             app.cursorLocation += 1
-        if event.key in ";:'\".?!" or event.key == "Enter" or event.key == "Space":
+        if event.key in ";:\".?!" or event.key == "Enter" or event.key == "Space":
             app.selectedWord = findWordIndexWithChar(app, app.cursorLocation - 1)
             while app.words[app.selectedWord] == "" and app.selectedWord > 0:
                 app.selectedWord -= 1
@@ -222,6 +228,7 @@ def keyPressed(app, event):
             focusWord = focusWord.strip(",\'\":;.?/!")
             wordStatus, abbrevStatus = g.isWordOrName(focusWord)
             if not wordStatus:
+                print(g.correctWord(app.words[app.selectedWord], abbrevStatus))
                 app.buttons, app.lastTried = g.correctWord(app.words[app.selectedWord], abbrevStatus)
                 app.lastCorrections = app.buttons
                 calculateButtonLocations(app)
@@ -229,6 +236,8 @@ def keyPressed(app, event):
             if len(app.words) > len(app.wordFeatures):
                 app.wordFeatures.insert(app.cursorLocation - 1, app.typingMode)
     wasHighlighted = False
+    if len(app.buttons) != 0:
+        app.theLabel = "Please select an option before continuing"
 
 def mousePressed(app, event):
     x0, y0, x1, y1 = app.textboxBorders
@@ -267,6 +276,7 @@ def mousePressed(app, event):
                 "Keep searching"}
         for text in app.buttons:  
             if buttonClicked(app, text, event.x, event.y):
+                app.theLabel = ""
                 if text not in specialButtons:
                     app.words = app.words[0:app.selectedWord] + \
                         [text] + app.words[app.selectedWord + 1:]
@@ -278,13 +288,14 @@ def mousePressed(app, event):
                 elif text == f"Add {text} to personal dictionary":
                     dictionaries.personalDictionary.add(text)
                 elif text == "Keep searching":
+                    app.theLabel = "This may take a minute"
                     g.keepSearching(app.lastTried, app.lastAbbrev)
                 app.buttons = []
                 app.buttonLocations = []
                 break
     elif x1 >= event.x >= x0 and y1 >= event.y >= y0:
         app.textboxSelected = True
-        app.cursorLocation = findNearestChar(app, event.x, event.y)
+        app.cursorLocation = findNearestChar(app, event.x, event.y)[0]
     else:
         app.textboxSelected = False
     app.highlight = None
@@ -293,19 +304,19 @@ def mousePressed(app, event):
 def findWordIndexWithChar(app, index):
     total = i = 0
     #exit with i as one line past nearestLetter
-    while total < index:
-        total += app.lineLengths[i]
+    while total <= index:
+        total += len(app.textLines[i])
         i += 1
     i -= 1
     total -= app.lineLengths[i]
     cumLineLength = 0
     cumWordTotal = 0
     for j in range(i):
-        cumLineLength += app.lineLengths[j]
+        cumLineLength += len(app.textLines[j])
         cumWordTotal += len(app.textLines[j].split(" "))
     while cumLineLength < index:
         cumWordTotal += 1
-        cumLineLength += 1 + len(app.words[cumWordTotal - 1])
+        cumLineLength += 1 + len(app.words[cumWordTotal - 2])
     return cumWordTotal - 1
 
 #for highlighting text
@@ -314,21 +325,24 @@ def mouseDragged(app, event):
     x0, y0, x1, y1 = app.textboxBorders
     if(x0<x<x1 and y0<y<y1):
         #index
-        nearestLetter = findNearestChar(app, x, y)
+        nearestLetter, flag = findNearestChar(app, x, y)
         #index
-        nearestWord = findWordIndexWithChar(app, nearestLetter)
-        if app.highlight == None or app.highlight == (nearestWord, nearestWord):
-            app.highlight = (nearestWord, nearestWord)
-        elif app.highlight[0] - 1 == nearestWord:
-            app.highlight = (app.highlight[0] - 1, app.highlight[1])
-        elif app.highlight[1] + 1 == nearestWord:
-            app.highlight = (app.highlight[0], app.highlight[1] + 1)
-        elif app.highlight[0] + 1 == nearestWord:
-            app.highlight = (app.highlight[0] + 1, app.highlight[1])
-        elif app.highlight[1] - 1 == nearestWord:
-            app.highlight = (app.highlight[0], app.highlight[1] - 1)
-        else:
-            app.highlight = (nearestWord, nearestWord)
+        if flag:
+            nearestWord = findWordIndexWithChar(app, nearestLetter)
+            if app.highlight == None or app.highlight == (nearestWord, nearestWord):
+                app.highlight = (nearestWord, nearestWord)
+            elif app.highlight[0] - 1 == nearestWord:
+                app.highlight = (app.highlight[0] - 1, app.highlight[1])
+            elif app.highlight[1] + 1 == nearestWord:
+                app.highlight = (app.highlight[0], app.highlight[1] + 1)
+            elif app.highlight[0] == nearestWord or app.highlight[1] == nearestWord:
+                pass
+            elif app.highlight[0] + 1 == nearestWord:
+                app.highlight = (app.highlight[0] + 1, app.highlight[1])
+            elif app.highlight[1] - 1 == nearestWord:
+                app.highlight = (app.highlight[0], app.highlight[1] - 1)
+            else:
+                app.highlight = (nearestWord, nearestWord)
     
 #----------------------------------VIEW------------------------------------------
 
@@ -352,29 +366,6 @@ def drawButtons(app, canvas):
         startWidth, startHeight = app.buttonLocations[i]
         drawSingleButton(app, canvas, app.buttons[i], startWidth, startHeight)
 
-def drawHighlight(app, canvas):
-    if app.highlight != None:
-        total = 0
-        #the ending value of i is the line of first highlighted word
-        #ending value of total is first index of line i
-        for i in range(len(app.lineLengths)):
-            if total + app.lineLengths[i] < app.highlight[0]:
-                total += app.lineLengths[i]
-            else:
-                total += 1
-                break
-        startX = 15
-        startY = i*app.distanceBtwnLines + app.topOfTextbox + 2
-        for word in app.textLines[i][0:app.highlight[0]]:
-            startX += 25*len(word)
-        for index in range(app.highlight[0], app.highlight[1] + 1):
-            canvas.create_rectangle(startX, startY, startX + len(app.words[index]) * 8,\
-                startY + app.distanceBtwnLines, fill="lightyellow", outline="lightyellow")
-            startX += 5*len(app.words[index])
-            if index != len(app.words) - 1 and startX + len(app.words[index+1])> app.width - app.textboxBorders[2]:
-                startY += app.distanceBtwnLines
-                startX = 15 
-
 def drawTextbox(app, canvas):
     startHeight = app.topOfTextbox
     if app.textboxSelected:
@@ -383,7 +374,6 @@ def drawTextbox(app, canvas):
     else:
         canvas.create_rectangle(app.textboxBorders, fill='lightgrey', \
             width=0)
-    drawHighlight(app, canvas)
     drawText(app, canvas)
 
 def featureTranslation(features):
@@ -396,6 +386,7 @@ def featureTranslation(features):
         ret += " italic"
     return ret
 
+#my project mentor, Natalie, told me how to find the bounding box of text objects
 def drawText(app, canvas):
     startX = 15
     startY = app.topOfTextbox
@@ -407,13 +398,20 @@ def drawText(app, canvas):
                 next
             features = app.wordFeatures[index]
             f = featureTranslation(features)
-            canvas.create_text(startX, startY, text=word, anchor="nw",\
+            objID = canvas.create_text(startX, startY, text=word, anchor="nw",\
                 font="Arial 8"+f)
-            startX += len(word)*7
+            x0, y0, x1, y1 = canvas.bbox(objID)
+            if app.highlight != None and app.highlight[0] <= index <= app.highlight[1]:
+                drawHighlightRedux(app, canvas, x0, y0, x1, y1, word)
+            startX = x1 + 5
             index += 1
         startY += app.distanceBtwnLines
         startX = 15
     index = 0
+
+def drawHighlightRedux(app, canvas, x0, y0, x1, y1, word):
+    canvas.create_rectangle(x0 - 3, y0, x1 + 3, y1, fill="lightyellow", outline="lightyellow")
+    canvas.create_text(x0, y0, text=word, anchor="nw")
 
 #also includes top label
 def drawBorders(app, canvas):
@@ -426,6 +424,7 @@ def drawBorders(app, canvas):
     fontSize = int(round(app.height/22.86))
     canvas.create_text(app.width//2, app.height//30 + 13, text="Grammarly But Worse", \
         font=f"Times {fontSize} bold")
+    canvas.create_text(app.width//2 + 10, app.height//2, text=app.theLabel, anchor="nw")
 
 def redrawAll(app, canvas):
     drawBorders(app, canvas)
