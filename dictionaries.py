@@ -41,6 +41,7 @@ characters = {"a": {"q", "w", "s", "z", "e", "u"},
             "y":{"e", "t", "h", "u"},
             "z":{"a", "s", "x"}}
 
+#list of common digraphs
 def makeCommonDigraphs():
     commonDigraphs = dict()
     url = "http://pi.math.cornell.edu/~mec/2003-2004/cryptography/subs/digraphs.html"
@@ -51,14 +52,11 @@ def makeCommonDigraphs():
         element = element.get_text()
         if len(element) == 2:
             first, second = element[0], element[1]
-            print(first, second)
             try:
                 previous = commonDigraphs.get(first)
-                print(previous)
-                commonDigraphs[first] = previous.add(second)
+                commonDigraphs[first].add(second)
             except:
                 commonDigraphs[first] = {second}
-            print(commonDigraphs)
     return commonDigraphs
 
 
@@ -110,11 +108,13 @@ def makeStarterDict():
             mostCommonWords.add(word.lower())
     return mostCommonWords
 
-badChars = "!@#$%^*()_-=+”;:'\"][}{/?><.“,"
+badChars = "!@#$%^*()_-=+”;:'\"][}{/?><.“,1234567890"
 for c in list(badChars):
     characters[c] = set()
+for c in "QWERTYUIOPASDFGHJKLZXCVBNM":
+    characters[c] = characters[c.lower()]
 mostCommonWords = makeStarterDict()
 commonDigraphs = makeCommonDigraphs()
-print(commonDigraphs)
+#print(commonDigraphs)
 #print(mostCommonWords)
 #print(len(mostCommonWords))

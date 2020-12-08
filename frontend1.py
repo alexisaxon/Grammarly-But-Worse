@@ -3,6 +3,7 @@ module_manager.review()
 from cmu_112_graphics import *
 import grammar as g
 import PIL
+import dictionaries
 
 def appStarted(app):
     app.cursorLocation = 0 #string index
@@ -223,9 +224,18 @@ def keyPressed(app, event):
         if event.key in ";:\".?!" or event.key == "Enter" or event.key == "Space":
             app.selectedWord = findWordIndexWithChar(app, app.cursorLocation - 1)
             print("a", app.selectedWord)
-            while app.words[app.selectedWord] == "" and app.selectedWord > 0:
-                print("b",app.selectedWord)
+            while app.selectedWord >= len(app.words) or (app.words[app.selectedWord] == "" \
+                and app.selectedWord > 0):
+                print("b", app.selectedWord)
                 app.selectedWord -= 1
+            '''
+            try:
+                while app.words[app.selectedWord] == "" and app.selectedWord > 0:
+                    print("b",app.selectedWord)
+                    app.selectedWord -= 1
+            except:
+                app.selectedWord -= 1
+                '''
             focusWord = app.words[app.selectedWord]
             focusWord = focusWord.strip(",\'\":;.?/!")
             tempLst = g.isWordOrName(focusWord)
@@ -275,7 +285,7 @@ def mousePressed(app, event):
     #don't do button checks if on other side of canvas
     elif event.x > app.width//2 + app.buttonMargin: 
         app.textboxSelected = False
-        specialButtons = {"Ignore", f"Add {app.words[app.selectedWord]} to personal dictionary", \
+        specialButtons = {"Ignore", f"Add '{app.words[app.selectedWord]}' to Personal Dictionary", \
                 "Keep searching"}
         for text in app.buttons:  
             if buttonClicked(app, text, event.x, event.y):
@@ -288,7 +298,7 @@ def mousePressed(app, event):
                         app.fullText += " " + word
                     app.fullText = app.fullText[1:]
                     createWordList(app, app.fullText)
-                elif text == f"Add {text} to personal dictionary":
+                elif text == f"Add '{app.words[app.selectedWord]}' to Personal Dictionary":
                     dictionaries.personalDictionary.add(text)
                 elif text == "Keep searching":
                     app.theLabel = "This may take a minute"
@@ -305,9 +315,11 @@ def mousePressed(app, event):
 
 #takes index of char and returns index of word it's in
 def findWordIndexWithChar(app, index):
+    print(index)
     total = i = 0
     #exit with i as one line past nearestLetter
     while total <= index:
+        print(total, i)
         total += len(app.textLines[i])
         i += 1
     i -= 1
