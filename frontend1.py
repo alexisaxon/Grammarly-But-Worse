@@ -184,16 +184,25 @@ def saveImage(app):
     app.saveSnapshot()
 #--------------------------------CONTROL-----------------------------------------
 
+#returns index of fullText highlight starts on and its length in characters
+def findHighlight(app):
+    print(app.highlight)
+    lenOfHighlight = 0
+    for word in app.words[app.highlight[0]:app.highlight[1] + 1]:
+        lenOfHighlight += len(word) + 1
+    startIndex = calculateIndexOfWord(app, app.highlight[0])
+    return startIndex, lenOfHighlight
+
 #allows user to type in textbox
 #Professor Kosbie gave me high-level advice on how to implement the textbox in 112 Graphics
 def keyPressed(app, event):
     wasHighlighted = False
     if app.highlight != None and event.key != "Left" and event.key != "Right":
+        app.wordFeatures = app.wordFeatures[0:app.highlight[0]] + \
+            app.wordFeatures[app.highlight[1] + 1:]
         wasHighlighted = True
-        lenOfHighlight = 0
-        for word in app.words[app.highlight[0]:app.highlight[1] + 1]:
-            lenOfHighlight += len(word)
-        startIndex = calculateIndexOfWord(app, app.highlight[0])
+        startIndex, lenOfHighlight = findHighlight(app)
+        print(startIndex, lenOfHighlight)
         app.fullText = app.fullText[0:startIndex] + \
             app.fullText[startIndex + lenOfHighlight + 1:]
         app.cursorLocation = startIndex
@@ -246,9 +255,8 @@ def keyPressed(app, event):
                 app.lastCorrections = app.buttons
                 calculateButtonLocations(app)
                 app.lastAbbrev = abbrevStatus
-            if len(app.words) > len(app.wordFeatures):
-                app.wordFeatures.insert(app.cursorLocation - 1, app.typingMode)
-    wasHighlighted = False
+    while len(app.words) > len(app.wordFeatures):
+        app.wordFeatures.insert(app.cursorLocation - 1, app.typingMode)
     if len(app.buttons) != 0:
         app.theLabel = "Please select an option before continuing"
 
@@ -308,7 +316,7 @@ def mousePressed(app, event):
                 break
     elif x1 >= event.x >= x0 and y1 >= event.y >= y0:
         app.textboxSelected = True
-        app.cursorLocation = findNearestChar(app, event.x, event.y)[0]
+        app.cursorLocation = findNearestChar(app, event.x, event.y)[0] + 1
     else:
         app.textboxSelected = False
     app.highlight = None
@@ -318,8 +326,9 @@ def findWordIndexWithChar(app, index):
     print(index)
     total = i = 0
     #exit with i as one line past nearestLetter
-    while total <= index:
-        print(total, i)
+    calculateTextLines(app)
+    while total < index:
+        print(total, i) 
         total += len(app.textLines[i])
         i += 1
     i -= 1
@@ -358,6 +367,11 @@ def mouseDragged(app, event):
                 app.highlight = (app.highlight[0], app.highlight[1] - 1)
             else:
                 app.highlight = (nearestWord, nearestWord)
+        if app.highlight != None:
+            if app.highlight[0] == -1:
+                app.highlight[0] = 0
+            if app.highlight[1] == -1:
+                app.highlight[1] = 0
     
 #----------------------------------VIEW------------------------------------------
 
@@ -406,20 +420,22 @@ def drawText(app, canvas):
     startX = 15
     startY = app.topOfTextbox
     index = 0
+    print(app.words, app.wordFeatures)
     for i in range(len(app.textLines)):
         for word in app.textLines[i].split(" "):
             if word == "":
                 index -= 1
                 next
-            features = app.wordFeatures[index]
-            f = featureTranslation(features)
-            objID = canvas.create_text(startX, startY, text=word, anchor="nw",\
-                font="Arial 8"+f)
-            x0, y0, x1, y1 = canvas.bbox(objID)
-            if app.highlight != None and app.highlight[0] <= index <= app.highlight[1]:
-                drawHighlightRedux(app, canvas, x0, y0, x1, y1, word)
-            startX = x1 + 5
-            index += 1
+            if app.words != [""]:
+                features = app.wordFeatures[index]
+                f = featureTranslation(features)
+                objID = canvas.create_text(startX, startY, text=word, anchor="nw",\
+                    font="Arial 8"+f)
+                x0, y0, x1, y1 = canvas.bbox(objID)
+                if app.highlight != None and app.highlight[0] <= index <= app.highlight[1]:
+                    drawHighlightRedux(app, canvas, x0, y0, x1, y1, word)
+                startX = x1 + 5
+                index += 1
         startY += app.distanceBtwnLines
         startX = 15
     index = 0
