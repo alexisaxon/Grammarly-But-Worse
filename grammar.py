@@ -21,7 +21,10 @@ def isWord(word):
     url = "https://www.dictionary.com/browse/" + word + "?s=t"
     req = requests.get(url, headers) #takes .5 seconds
     soup = BeautifulSoup(req.content, 'html.parser')
-    if soup.find_all("meta")[1].get("name") == "robots":
+    try:
+        if soup.find_all("meta")[1].get("name") == "robots":
+            return (False, False)
+    except:
         return (False, False)
     if isAbbreviation(word, soup):
         return (True, True)
