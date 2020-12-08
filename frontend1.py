@@ -269,6 +269,7 @@ def mousePressed(app, event):
                 if text == "Paste":
                     app.fullText = app.fullText[0:app.cursorLocation] + app.clipboard + \
                         app.fullText[app.cursorLocation:]
+                    app.wordFeatures.insert(app.cursorLocation, app.typingMode)
                     app.cursorLocation += len(app.clipboard)
                     app.words = app.fullText.split(" ")
                     createWordList(app, app.fullText)
