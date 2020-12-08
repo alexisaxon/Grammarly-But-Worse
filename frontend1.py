@@ -4,6 +4,7 @@ from cmu_112_graphics import *
 import grammar as g
 import PIL
 import dictionaries
+import copy
 
 def appStarted(app):
     app.cursorLocation = 0 #string index
@@ -186,7 +187,6 @@ def saveImage(app):
 
 #returns index of fullText highlight starts on and its length in characters
 def findHighlight(app):
-    print(app.highlight)
     lenOfHighlight = 0
     for word in app.words[app.highlight[0]:app.highlight[1] + 1]:
         lenOfHighlight += len(word) + 1
@@ -202,7 +202,6 @@ def keyPressed(app, event):
             app.wordFeatures[app.highlight[1] + 1:]
         wasHighlighted = True
         startIndex, lenOfHighlight = findHighlight(app)
-        print(startIndex, lenOfHighlight)
         app.fullText = app.fullText[0:startIndex] + \
             app.fullText[startIndex + lenOfHighlight + 1:]
         app.cursorLocation = startIndex
@@ -232,10 +231,8 @@ def keyPressed(app, event):
             app.cursorLocation += 1
         if event.key in ";:\".?!" or event.key == "Enter" or event.key == "Space":
             app.selectedWord = findWordIndexWithChar(app, app.cursorLocation - 1)
-            print("a", app.selectedWord)
             while app.selectedWord >= len(app.words) or (app.words[app.selectedWord] == "" \
                 and app.selectedWord > 0):
-                print("b", app.selectedWord)
                 app.selectedWord -= 1
             '''
             try:
@@ -256,7 +253,7 @@ def keyPressed(app, event):
                 calculateButtonLocations(app)
                 app.lastAbbrev = abbrevStatus
     while len(app.words) > len(app.wordFeatures):
-        app.wordFeatures.insert(app.cursorLocation - 1, app.typingMode)
+        app.wordFeatures.insert(app.cursorLocation - 1, copy.copy(app.typingMode))
     if len(app.buttons) != 0:
         app.theLabel = "Please select an option before continuing"
 
@@ -289,6 +286,11 @@ def mousePressed(app, event):
                             for i in range(app.highlight[0], app.highlight[1] + 1):
                                 app.clipboard += app.words[i] + " "
                             app.clipboard = app.clipboard[:len(app.clipboard) - 1]
+                else:
+                    if features[text] not in app.typingMode:
+                        app.typingMode.append(features[text])
+                    else:
+                        app.typingMode.remove(features[text])
                 break
     #don't do button checks if on other side of canvas
     elif event.x > app.width//2 + app.buttonMargin: 
@@ -323,12 +325,10 @@ def mousePressed(app, event):
 
 #takes index of char and returns index of word it's in
 def findWordIndexWithChar(app, index):
-    print(index)
     total = i = 0
     #exit with i as one line past nearestLetter
     calculateTextLines(app)
     while total < index:
-        print(total, i) 
         total += len(app.textLines[i])
         i += 1
     i -= 1
@@ -355,9 +355,9 @@ def mouseDragged(app, event):
             nearestWord = findWordIndexWithChar(app, nearestLetter)
             if app.highlight == None or app.highlight == (nearestWord, nearestWord):
                 app.highlight = (nearestWord, nearestWord)
-            elif app.highlight[0] - 1 == nearestWord:
-                app.highlight = (app.highlight[0] - 1, app.highlight[1])
-            elif app.highlight[1] + 1 == nearestWord:
+            elif app.highlight[0] > nearestWord:
+                app.highlight = (nearestWord, app.highlight[1])
+            elif app.highlight[1] < nearestWord:
                 app.highlight = (app.highlight[0], app.highlight[1] + 1)
             elif app.highlight[0] == nearestWord or app.highlight[1] == nearestWord:
                 pass
@@ -369,9 +369,9 @@ def mouseDragged(app, event):
                 app.highlight = (nearestWord, nearestWord)
         if app.highlight != None:
             if app.highlight[0] == -1:
-                app.highlight[0] = 0
+                app.highlight = (0, app.highlight[1])
             if app.highlight[1] == -1:
-                app.highlight[1] = 0
+                app.highlight = (app.highlight[0], 0)
     
 #----------------------------------VIEW------------------------------------------
 
@@ -420,7 +420,6 @@ def drawText(app, canvas):
     startX = 15
     startY = app.topOfTextbox
     index = 0
-    print(app.words, app.wordFeatures)
     for i in range(len(app.textLines)):
         for word in app.textLines[i].split(" "):
             if word == "":
@@ -433,16 +432,16 @@ def drawText(app, canvas):
                     font="Arial 8"+f)
                 x0, y0, x1, y1 = canvas.bbox(objID)
                 if app.highlight != None and app.highlight[0] <= index <= app.highlight[1]:
-                    drawHighlightRedux(app, canvas, x0, y0, x1, y1, word)
+                    drawHighlightRedux(app, canvas, x0, y0, x1, y1, word, f)
                 startX = x1 + 5
                 index += 1
         startY += app.distanceBtwnLines
         startX = 15
     index = 0
 
-def drawHighlightRedux(app, canvas, x0, y0, x1, y1, word):
+def drawHighlightRedux(app, canvas, x0, y0, x1, y1, word, f):
     canvas.create_rectangle(x0 - 3, y0, x1 + 3, y1, fill="lightyellow", outline="lightyellow")
-    canvas.create_text(x0, y0, text=word, anchor="nw")
+    canvas.create_text(x0, y0, text=word, anchor="nw", font="Arial 8"+f)
 
 #also includes top label
 def drawBorders(app, canvas):
