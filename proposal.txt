@@ -58,3 +58,8 @@ above the textbox to allow the user to bold, underline, copy, paste, etc. In
 addition, due to the availability of time, I am unlikely to include the 'upload'
 mode that I originally planned, which also means that my project will not need
 a splash screen.
+
+TP3 Update:
+I have added one additional label to the user interface, after TP2, to direct the
+user on how to react to various occurences in the program (ex when spelling
+suggestions are made)
