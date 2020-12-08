@@ -328,7 +328,7 @@ def findWordIndexWithChar(app, index):
     total = i = 0
     #exit with i as one line past nearestLetter
     calculateTextLines(app)
-    while total < index:
+    while total < index and i < len(app.textLines):
         total += len(app.textLines[i])
         i += 1
     i -= 1
@@ -336,8 +336,9 @@ def findWordIndexWithChar(app, index):
     cumLineLength = 0
     cumWordTotal = 0
     for j in range(i):
-        cumLineLength += len(app.textLines[j])
-        cumWordTotal += len(app.textLines[j].split(" "))
+        if len(app.textLines) < j:
+            cumLineLength += len(app.textLines[j])
+            cumWordTotal += len(app.textLines[j].split(" "))
     while cumLineLength < index:
         cumWordTotal += 1
         cumLineLength += 1 + len(app.words[cumWordTotal - 2])
