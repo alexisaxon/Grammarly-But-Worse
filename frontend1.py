@@ -53,6 +53,7 @@ def startWords(app):
 
 #returns True if user clicked button with 'text', false otherwise    
 def buttonClicked(app, text, x, y):
+    print(text)
     buttonWidth = 10*len(text)
     #when we're in app.buttons, rather than word features
     try:
@@ -60,6 +61,7 @@ def buttonClicked(app, text, x, y):
         left = app.buttonLocations[i][0]
         top = app.buttonLocations[i][1]
         if x >= left and x <= left + buttonWidth and y >= top and y <= top + app.buttonHeight:
+            print(text)
             return True
         return False
     #when we're in word features
@@ -107,14 +109,14 @@ def buttonShiftRow(app, first, last, shiftBy):
 def calculateButtonLocations(app):
     if len(app.buttons) != 0:
         app.buttonLocations = []
-        startWidth = app.width//2 + app.buttonMargin
+        startWidth = app.width//2 + app.buttonMargin*4
         startHeight = 25 + app.height//15
         firstButtonInRow = 0
         for i in range(len(app.buttons)):
             text = app.buttons[i]
             buttonWidth = len(text) * 10
             if startWidth + buttonWidth > app.width - app.buttonMargin:
-                startWidth = app.width//2 + app.buttonMargin
+                startWidth = app.width//2 + app.buttonMargin*4
                 startHeight += app.buttonMargin + app.buttonHeight
                 if i != 0: #since prevEnd not meaningfully defined yet
                     buttonShiftRow(app, firstButtonInRow, i, (app.width//2 - app.buttonMargin -\
@@ -286,7 +288,7 @@ def runThroughChecks(app, focusWord):
 def mousePressed(app, event):
     x0, y0, x1, y1 = app.textboxBorders
     features = {"Underline":"u", "Bold":"b", "Italicize":"i"}
-    if event.x < 1.25 * app.width//2 and event.y < app.topOfTextbox:
+    if event.x < 1.1 * app.width//2 and event.y < app.topOfTextbox:
         for text in app.textButtons:
             if buttonClicked(app, text, event.x, event.y):
                 if text == "Save":
@@ -333,7 +335,7 @@ def mousePressed(app, event):
                         app.typingMode.remove(features[text])
                 break
     #don't do button checks if on other side of canvas
-    elif event.x > app.width//2 + app.buttonMargin: 
+    elif event.x > app.width//2: 
         app.textboxSelected = False
         specialButtons = {"Ignore", f"Add '{app.words[app.selectedWord]}' to Personal Dictionary", \
                 "Keep searching"}
@@ -373,7 +375,6 @@ def findWordIndexWithChar(app, index):
         i += 1
     i -= 1
     calculateTextLines(app)
-    print(app.textLines, app.lineLengths)
     try:
         total -= app.lineLengths[i]
     except:

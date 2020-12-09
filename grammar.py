@@ -83,6 +83,27 @@ def correctWord(word, abbrevStatus):
     if word in dictionaries.completedCorrections:
         return dictionaries.completedCorrections[word]
     corrections = []
+    #missed letter
+    for i in range(len(word)):
+        letter = word[i]
+        if letter in dictionaries.commonDigraphs:
+            for thing in dictionaries.commonDigraphs[letter]:
+                newWord = word[0:i+1] + thing + word[i+1:]
+                print(letter, thing, newWord)
+                if newWord in dictionaries.mostCommonWords:
+                #puts common words at front for better user experience
+                    corrections.insert(0, newWord)
+            #if word already checked, use previous result
+                elif newWord in dictionaries.wordsChecked:
+                    if dictionaries.wordsChecked[newWord][0] and \
+                    dictionaries.wordsChecked[newWord][1] == abbrevStatus:
+                        corrections.append(newWord)
+                else:
+                    newWordStatus, newAbbrevStatus = isWordOrName(newWord)
+                    if newWordStatus and newAbbrevStatus == abbrevStatus:
+                        corrections.append(newWord)
+                tried.append(newWord)
+    #mistaken letter
     for letter in list(word):
         for option in dictionaries.characters[letter]:
             newWord = word.replace(letter, option, 1)
@@ -103,7 +124,7 @@ def correctWord(word, abbrevStatus):
     corrections.append("Keep searching")
     corrections.append("Ignore")
     dictionaries.completedCorrections[word] = corrections
-    return (corrections, tried)
+    return [corrections, tried] 
 
 def keepSearching(lst, abbrevStatus):
     corrections = []
