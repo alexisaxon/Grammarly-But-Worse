@@ -132,14 +132,30 @@ def calculateTextLines(app):
     textLines = [""]
     app.lineLengths = []
     for word in app.wordsRepr:
-        if lineTotal + len(word) > app.maxChars:
-            textLines.append(word)
+        if "\n" in word:
+            index = word.find("\n")
+            word1, word2 = word[0:index], word[index+1:]
+            if lineTotal + len(word1) > app.maxChars:
+                textLines.append(word1)
+                app.lineLengths.append(lineTotal)
+                lineTotal = len(word1)
+                currentLine += 1
+            else:
+                textLines[currentLine] += " " + word1
+                lineTotal += len(word1) + 1
+            textLines.append(word2)
             app.lineLengths.append(lineTotal)
-            lineTotal = len(word)
+            lineTotal = len(word2)
             currentLine += 1
         else:
-            textLines[currentLine] += " " + word
-            lineTotal += len(word) + 1
+            if lineTotal + len(word) > app.maxChars:
+                textLines.append(word)
+                app.lineLengths.append(lineTotal)
+                lineTotal = len(word)
+                currentLine += 1
+            else:
+                textLines[currentLine] += " " + word
+                lineTotal += len(word) + 1
     app.lineLengths.append(lineTotal)
     toPrint = ""
     for line in textLines:
@@ -264,8 +280,21 @@ def mousePressed(app, event):
         for text in app.textButtons:
             if buttonClicked(app, text, event.x, event.y):
                 if text == "Save":
-                    saveImage(app)
-                    break
+                    while True:
+                        choice = app.getUserInput("Would you like to save as a text or image file?" +\
+                            " Type 'i' for image and 't' for text")
+                        if choice.lower() == "i":
+                            saveImage(app)
+                            app.message = "Save successful!"
+                            break
+                        elif choice.lower() == "t":
+                            fileName = app.getUserInput("What do you want to call your file?")
+                            file1 = open(rf"{fileName}.txt", "w")
+                            for i in range(len(app.textLines)):
+                                file1.write(app.textLines[i])
+                            file1.close()
+                            app.message = "Save successful!"
+                            break
                 if text == "Paste":
                     app.fullText = app.fullText[0:app.cursorLocation] + app.clipboard + \
                         app.fullText[app.cursorLocation:]
