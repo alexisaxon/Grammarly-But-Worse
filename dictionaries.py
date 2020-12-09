@@ -39,7 +39,8 @@ characters = {"a": {"q", "w", "s", "z", "e", "u"},
             "w": {"q", "a", "s", "d", "e"},
             "x": {"z","s","d","c"},
             "y":{"e", "t", "h", "u"},
-            "z":{"a", "s", "x"}}
+            "z":{"a", "s", "x"},
+            "\n":{""}}
 
 #list of common digraphs
 def makeCommonDigraphs():

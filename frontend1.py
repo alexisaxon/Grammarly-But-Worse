@@ -92,6 +92,7 @@ def createWordList(app, text):
             index = temp.find("\n")
             app.words[i] = temp[0:index]
             app.words.insert(i+1,temp[index+1:])
+            app.wordFeatures.insert(i+1, app.wordFeatures[i])
     app.wordsRepr = app.fullText.split(" ")
     calculateTextLines(app)
 
@@ -174,7 +175,10 @@ def findNearestChar(app, x, y):
     for i in range(0, app.lineLengths[lineNum]):
         positionOfChar = 15 + len(app.textLines[lineNum][0:i])*4
         distancesFromX.append(abs(x-positionOfChar))
-    charPixel = min(distancesFromX)
+    try:
+        charPixel = min(distancesFromX)
+    except:
+        charPixel = 0
     charNumInLine = distancesFromX.index(charPixel)
     total = 0
     for line in app.textLines[0:lineNum]:
@@ -250,28 +254,34 @@ def keyPressed(app, event):
             while app.selectedWord >= len(app.words) or (app.words[app.selectedWord] == "" \
                 and app.selectedWord > 0):
                 app.selectedWord -= 1
-            '''
-            try:
-                while app.words[app.selectedWord] == "" and app.selectedWord > 0:
-                    print("b",app.selectedWord)
-                    app.selectedWord -= 1
-            except:
-                app.selectedWord -= 1
-                '''
             focusWord = app.words[app.selectedWord]
+            focusWord = focusWord.strip("\n")
             focusWord = focusWord.strip(",\'\":;.?/!")
-            tempLst = g.isWordOrName(focusWord)
-            wordStatus, abbrevStatus = tempLst[0], tempLst[1]
-            if not wordStatus:
-                tempLst = g.correctWord(app.words[app.selectedWord], abbrevStatus)
-                app.buttons, app.lastTried = tempLst[0], tempLst[1]
-                app.lastCorrections = app.buttons
-                calculateButtonLocations(app)
-                app.lastAbbrev = abbrevStatus
+            if focusWord != "" and "\n" not in focusWord:
+                runThroughChecks(app,focusWord)
+            elif "\n" in focusWord:
+                index = focusWord.find("\n")
+                app.words.insert(app.selectedWord + 1, focusWord[index+1:])
+                app.words[app.selectedWord] = focusWord[0:index]
+                app.wordFeatures.insert(app.selectedWord + 1, app.wordFeatures[app.selectedWord])
+                runThroughChecks(app, focusWord[0:index])
+                runThroughChecks(app, focusWord[index+1:])
     while len(app.words) > len(app.wordFeatures):
         app.wordFeatures.insert(app.cursorLocation - 1, copy.copy(app.typingMode))
     if len(app.buttons) != 0:
         app.theLabel = "Please select an option before continuing"
+
+def runThroughChecks(app, focusWord):
+    focusWord = focusWord.strip("\n")
+    focusWord = focusWord.strip(",\'\":;.?/!")
+    tempLst = g.isWordOrName(focusWord)
+    wordStatus, abbrevStatus = tempLst[0], tempLst[1]
+    if not wordStatus:
+        tempLst = g.correctWord(focusWord, abbrevStatus)
+        app.buttons, app.lastTried = tempLst[0], tempLst[1]
+        app.lastCorrections = app.buttons
+        calculateButtonLocations(app)
+    app.lastAbbrev = abbrevStatus
 
 def mousePressed(app, event):
     x0, y0, x1, y1 = app.textboxBorders
@@ -330,7 +340,7 @@ def mousePressed(app, event):
         for text in app.buttons:  
             if buttonClicked(app, text, event.x, event.y):
                 app.theLabel = ""
-                if text not in specialButtons:
+                if text not in specialButtons and not text.endswith("Personal Dictionary"):
                     app.words = app.words[0:app.selectedWord] + \
                         [text] + app.words[app.selectedWord + 1:]
                     app.fullText = ""
@@ -338,7 +348,7 @@ def mousePressed(app, event):
                         app.fullText += " " + word
                     app.fullText = app.fullText[1:]
                     createWordList(app, app.fullText)
-                elif text == f"Add '{app.words[app.selectedWord]}' to Personal Dictionary":
+                elif text.endswith("Personal Dictionary"):
                     dictionaries.personalDictionary.add(text)
                 elif text == "Keep searching":
                     app.theLabel = "This may take a minute"
@@ -362,7 +372,12 @@ def findWordIndexWithChar(app, index):
         total += len(app.textLines[i])
         i += 1
     i -= 1
-    total -= app.lineLengths[i]
+    calculateTextLines(app)
+    print(app.textLines, app.lineLengths)
+    try:
+        total -= app.lineLengths[i]
+    except:
+        pass #last line must have length zero anyways
     cumLineLength = 0
     cumWordTotal = 0
     for j in range(i):
