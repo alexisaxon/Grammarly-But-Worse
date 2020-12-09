@@ -53,7 +53,6 @@ def startWords(app):
 
 #returns True if user clicked button with 'text', false otherwise    
 def buttonClicked(app, text, x, y):
-    print(text)
     buttonWidth = 10*len(text)
     #when we're in app.buttons, rather than word features
     try:
@@ -61,7 +60,6 @@ def buttonClicked(app, text, x, y):
         left = app.buttonLocations[i][0]
         top = app.buttonLocations[i][1]
         if x >= left and x <= left + buttonWidth and y >= top and y <= top + app.buttonHeight:
-            print(text)
             return True
         return False
     #when we're in word features
@@ -285,6 +283,26 @@ def runThroughChecks(app, focusWord):
         calculateButtonLocations(app)
     app.lastAbbrev = abbrevStatus
 
+def saveStuff(app):
+    while True:
+        choice = app.getUserInput("Would you like to save as a text or image file?" +\
+        " Type 'i' for image and 't' for text")
+        try:
+            if choice.lower() == "i":
+                saveImage(app)
+                app.message = "Save successful!"
+                break
+            elif choice.lower() == "t":
+                fileName = app.getUserInput("What do you want to call your file?")
+                file1 = open(rf"{fileName}.txt", "w")
+                for i in range(len(app.textLines)):
+                    file1.write(app.textLines[i])
+                file1.close()
+                app.message = "Save successful!"
+                break
+        except:
+            pass
+
 def mousePressed(app, event):
     x0, y0, x1, y1 = app.textboxBorders
     features = {"Underline":"u", "Bold":"b", "Italicize":"i"}
@@ -292,21 +310,7 @@ def mousePressed(app, event):
         for text in app.textButtons:
             if buttonClicked(app, text, event.x, event.y):
                 if text == "Save":
-                    while True:
-                        choice = app.getUserInput("Would you like to save as a text or image file?" +\
-                            " Type 'i' for image and 't' for text")
-                        if choice.lower() == "i":
-                            saveImage(app)
-                            app.message = "Save successful!"
-                            break
-                        elif choice.lower() == "t":
-                            fileName = app.getUserInput("What do you want to call your file?")
-                            file1 = open(rf"{fileName}.txt", "w")
-                            for i in range(len(app.textLines)):
-                                file1.write(app.textLines[i])
-                            file1.close()
-                            app.message = "Save successful!"
-                            break
+                    saveStuff(app)
                 if text == "Paste":
                     app.fullText = app.fullText[0:app.cursorLocation] + app.clipboard + \
                         app.fullText[app.cursorLocation:]
@@ -329,10 +333,13 @@ def mousePressed(app, event):
                                 app.clipboard += app.words[i] + " "
                             app.clipboard = app.clipboard[:len(app.clipboard) - 1]
                 else:
-                    if features[text] not in app.typingMode:
-                        app.typingMode.append(features[text])
-                    else:
-                        app.typingMode.remove(features[text])
+                    try:
+                        if features[text] not in app.typingMode:
+                            app.typingMode.append(features[text])
+                        else:
+                            app.typingMode.remove(features[text])
+                    except: #oddly occurs after saving successfully
+                        app.showMessage("Your save was successful!")
                 break
     #don't do button checks if on other side of canvas
     elif event.x > app.width//2: 
