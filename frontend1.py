@@ -92,7 +92,7 @@ def createWordList(app, text):
             index = temp.find("\n")
             app.words[i] = temp[0:index]
             app.words.insert(i+1,temp[index+1:])
-            app.wordFeatures.insert(i+1, app.wordFeatures[i])
+            app.wordFeatures.insert(i+1, copy.copy(app.wordFeatures[i]))
     app.wordsRepr = app.fullText.split(" ")
     calculateTextLines(app)
 
@@ -218,8 +218,8 @@ def findHighlight(app):
 def keyPressed(app, event):
     wasHighlighted = False
     if app.highlight != None and event.key != "Left" and event.key != "Right":
-        app.wordFeatures = app.wordFeatures[0:app.highlight[0]] + \
-            app.wordFeatures[app.highlight[1] + 1:]
+        app.wordFeatures = copy.copy(app.wordFeatures[0:app.highlight[0]]) + \
+            copy.copy(app.wordFeatures[app.highlight[1] + 1:])
         wasHighlighted = True
         startIndex, lenOfHighlight = findHighlight(app)
         app.fullText = app.fullText[0:startIndex] + \
@@ -263,7 +263,7 @@ def keyPressed(app, event):
                 index = focusWord.find("\n")
                 app.words.insert(app.selectedWord + 1, focusWord[index+1:])
                 app.words[app.selectedWord] = focusWord[0:index]
-                app.wordFeatures.insert(app.selectedWord + 1, app.wordFeatures[app.selectedWord])
+                app.wordFeatures.insert(app.selectedWord + 1, copy.copy(app.wordFeatures[app.selectedWord]))
                 runThroughChecks(app, focusWord[0:index])
                 runThroughChecks(app, focusWord[index+1:])
     while len(app.words) > len(app.wordFeatures):
@@ -314,7 +314,7 @@ def mousePressed(app, event):
                 if text == "Paste":
                     app.fullText = app.fullText[0:app.cursorLocation] + app.clipboard + \
                         app.fullText[app.cursorLocation:]
-                    app.wordFeatures.insert(app.cursorLocation, app.typingMode)
+                    app.wordFeatures.insert(app.cursorLocation, copy.copy(app.typingMode))
                     app.cursorLocation += len(app.clipboard)
                     app.words = app.fullText.split(" ")
                     createWordList(app, app.fullText)
@@ -357,13 +357,28 @@ def mousePressed(app, event):
                         app.fullText += " " + word
                     app.fullText = app.fullText[1:]
                     createWordList(app, app.fullText)
+                    app.buttons = []
+                    app.buttonLocations = []
                 elif text.endswith("Personal Dictionary"):
                     dictionaries.personalDictionary.add(text)
+                    app.buttons = []
+                    app.buttonLocations = []
                 elif text == "Keep searching":
                     app.theLabel = "This may take a minute"
-                    g.keepSearching(app.lastTried, app.lastAbbrev)
-                app.buttons = []
-                app.buttonLocations = []
+                    app.buttons = []
+                    app.buttonLocations = []
+                    results, app.lastTried = g.keepSearching(app.lastTried, app.lastAbbrev)
+                    for element in results:
+                        for element1 in element:
+                            if element1 not in specialButtons and not element1.endswith("Personal Dictionary"):
+                                if(element1 in dictionaries.mostCommonWords or element1 in dictionaries.personalDictionary):
+                                    app.buttons.insert(0,element1)
+                                else:
+                                    wordStatus, abbrevStatus = g.isWordOrName(element1) 
+                                    if wordStatus and abbrevStatus == app.lastAbbrev:
+                                        app.buttons.append(element1)
+                    calculateButtonLocations(app)
+                    app.theLabel = ""
                 break
     elif x1 >= event.x >= x0 and y1 >= event.y >= y0:
         app.textboxSelected = True

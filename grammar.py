@@ -89,7 +89,6 @@ def correctWord(word, abbrevStatus):
         if letter in dictionaries.commonDigraphs:
             for thing in dictionaries.commonDigraphs[letter]:
                 newWord = word[0:i+1] + thing + word[i+1:]
-                print(letter, thing, newWord)
                 if newWord in dictionaries.mostCommonWords:
                 #puts common words at front for better user experience
                     corrections.insert(0, newWord)
@@ -129,7 +128,7 @@ def correctWord(word, abbrevStatus):
 def keepSearching(lst, abbrevStatus):
     corrections = []
     tried = []
-    for word in lst:
+    for word in lst[0:3]:
         newCorrections, newTried = correctWord(word, abbrevStatus)
         if newCorrections not in corrections:
             print(newCorrections)
