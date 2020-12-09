@@ -278,8 +278,9 @@ def runThroughChecks(app, focusWord):
     wordStatus, abbrevStatus = tempLst[0], tempLst[1]
     if not wordStatus:
         tempLst = g.correctWord(focusWord, abbrevStatus)
+        print(tempLst[0])
         app.buttons, app.lastTried = tempLst[0], tempLst[1]
-        app.lastCorrections = app.buttons
+        app.lastCorrections = copy.copy(app.buttons)
         calculateButtonLocations(app)
     app.lastAbbrev = abbrevStatus
 
@@ -349,7 +350,8 @@ def mousePressed(app, event):
         for text in app.buttons:  
             if buttonClicked(app, text, event.x, event.y):
                 app.theLabel = ""
-                if text not in specialButtons and not text.endswith("Personal Dictionary"):
+                if text not in specialButtons and not text.endswith("Personal Dictionary") and \
+                    isinstance(app.buttons, list):
                     app.words = app.words[0:app.selectedWord] + \
                         [text] + app.words[app.selectedWord + 1:]
                     app.fullText = ""
@@ -381,6 +383,19 @@ def mousePressed(app, event):
                     app.buttons.append("Keep searching")
                     calculateButtonLocations(app)
                     app.theLabel = ""
+                elif text == "Ignore":
+                    app.buttons = []
+                    app.buttonLocations = []
+                elif not isinstance(app.buttons, list):
+                    app.words = app.words[0:app.selectedWord] + \
+                        [app.buttons] + app.words[app.selectedWord + 1:]
+                    app.fullText = ""
+                    for word in app.words:
+                        app.fullText += " " + word
+                    app.fullText = app.fullText[1:]
+                    createWordList(app, app.fullText)
+                    app.buttons = []
+                    app.buttonLocations = []
                 break
     elif x1 >= event.x >= x0 and y1 >= event.y >= y0:
         app.textboxSelected = True
@@ -462,9 +477,14 @@ def drawButtons(app, canvas):
         drawSingleButton(app, canvas, button, startWidth, startHeight)
         startWidth += app.buttonMargin + len(button) * 10
     #draws buttons for misspelled words
-    for i in range(len(app.buttons)):
-        startWidth, startHeight = app.buttonLocations[i]
-        drawSingleButton(app, canvas, app.buttons[i], startWidth, startHeight)
+    if not isinstance(app.buttons, list):
+        startWidth, startHeight = app.buttonLocations[0]
+        drawSingleButton(app, canvas, app.buttons, startWidth, startHeight)
+    else:
+        for i in range(len(app.buttons)):
+            startWidth, startHeight = app.buttonLocations[i]  
+            drawSingleButton(app, canvas, app.buttons[i], startWidth, startHeight)
+
 
 def drawTextbox(app, canvas):
     startHeight = app.topOfTextbox
