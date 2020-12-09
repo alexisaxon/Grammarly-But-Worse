@@ -64,6 +64,8 @@ def isWordOrName(word):
         if word.endswith(thing):
             word = word[:len(word) - 1]
             break
+    if word in dictionaries.personalDictionary:
+        return (True, False)
     wordStatus, abbrevStatus = isWord(word)
     if wordStatus or (mayBeName(word) and isName(word)):
         dictionaries.wordsChecked[word] = (True, abbrevStatus)
@@ -131,10 +133,8 @@ def keepSearching(lst, abbrevStatus):
     for word in lst[0:3]:
         newCorrections, newTried = correctWord(word, abbrevStatus)
         if newCorrections not in corrections:
-            print(newCorrections)
             corrections.append(newCorrections)
         if newTried not in tried:
-            print(newTried)
             tried.append(newTried)
         if len(corrections) > 30:
             break

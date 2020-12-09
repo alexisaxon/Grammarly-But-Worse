@@ -116,6 +116,3 @@ for c in "QWERTYUIOPASDFGHJKLZXCVBNM":
     characters[c] = characters[c.lower()]
 mostCommonWords = makeStarterDict()
 commonDigraphs = makeCommonDigraphs()
-#print(commonDigraphs)
-#print(mostCommonWords)
-#print(len(mostCommonWords))

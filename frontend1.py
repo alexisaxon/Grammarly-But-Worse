@@ -278,7 +278,6 @@ def runThroughChecks(app, focusWord):
     wordStatus, abbrevStatus = tempLst[0], tempLst[1]
     if not wordStatus:
         tempLst = g.correctWord(focusWord, abbrevStatus)
-        print(tempLst[0])
         app.buttons, app.lastTried = tempLst[0], tempLst[1]
         app.lastCorrections = copy.copy(app.buttons)
         calculateButtonLocations(app)
@@ -315,7 +314,8 @@ def mousePressed(app, event):
                 if text == "Paste":
                     app.fullText = app.fullText[0:app.cursorLocation] + app.clipboard + \
                         app.fullText[app.cursorLocation:]
-                    app.wordFeatures.insert(app.cursorLocation, copy.copy(app.typingMode))
+                    for i in range(len(app.clipboard.split(" "))):
+                        app.wordFeatures.insert(app.cursorLocation, copy.copy(app.typingMode))
                     app.cursorLocation += len(app.clipboard)
                     app.words = app.fullText.split(" ")
                     createWordList(app, app.fullText)
@@ -362,7 +362,7 @@ def mousePressed(app, event):
                     app.buttons = []
                     app.buttonLocations = []
                 elif text.endswith("Personal Dictionary"):
-                    dictionaries.personalDictionary.add(text)
+                    dictionaries.personalDictionary.add(app.words[app.selectedWord])
                     app.buttons = []
                     app.buttonLocations = []
                 elif text == "Keep searching":
