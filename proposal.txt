@@ -62,4 +62,5 @@ a splash screen.
 TP3 Update:
 I have added one additional label to the user interface, after TP2, to direct the
 user on how to react to various occurences in the program (ex when spelling
-suggestions are made)
+suggestions are made). I have also enhanced the types of spelling errors that the
+program checks for and added additional options for saving the file.
