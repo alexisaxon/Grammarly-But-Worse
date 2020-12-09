@@ -377,6 +377,8 @@ def mousePressed(app, event):
                                     wordStatus, abbrevStatus = g.isWordOrName(element1) 
                                     if wordStatus and abbrevStatus == app.lastAbbrev:
                                         app.buttons.append(element1)
+                    app.buttons.append("Ignore")
+                    app.buttons.append("Keep searching")
                     calculateButtonLocations(app)
                     app.theLabel = ""
                 break
